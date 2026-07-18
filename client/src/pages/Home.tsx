@@ -1,6 +1,11 @@
 import { useEffect } from "react";
+import { useAuth } from "@/_core/hooks/useAuth";
 
 export default function Home() {
+  // The userAuth hooks provides authentication state
+  // To implement login/logout functionality, simply call logout() or redirect to getLoginUrl()
+  let { user, loading, error, isAuthenticated, logout } = useAuth();
+
   useEffect(() => {
     window.location.href = "/index-navi.html";
   }, []);
