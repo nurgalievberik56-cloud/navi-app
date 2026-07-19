@@ -1462,6 +1462,18 @@ function AdsTab(_ref6) {
     _useState_sort2 = _slicedToArray(_useState_sort, 2),
     sortBy = _useState_sort2[0],
     setSortBy = _useState_sort2[1];
+  var _useState_price1 = useState(0),
+    _useState_price1a = _slicedToArray(_useState_price1, 2),
+    priceMin = _useState_price1a[0],
+    setPriceMin = _useState_price1a[1];
+  var _useState_price2 = useState(0),
+    _useState_price2a = _slicedToArray(_useState_price2, 2),
+    priceMax = _useState_price2a[0],
+    setPriceMax = _useState_price2a[1];
+  var _useState_showPrice = useState(false),
+    _useState_showPricea = _slicedToArray(_useState_showPrice, 2),
+    showPriceFilter = _useState_showPricea[0],
+    setShowPriceFilter = _useState_showPricea[1];
   var _useState35 = useState(false),
     _useState36 = _slicedToArray(_useState35, 2),
     showCreate = _useState36[0],
@@ -1495,6 +1507,13 @@ function AdsTab(_ref6) {
     return cat === "all" || a.category === cat;
   }).filter(function (a) {
     return !search || a.title.toLowerCase().includes(search.toLowerCase()) || (a.description || "").toLowerCase().includes(search.toLowerCase());
+  }).filter(function (a) {
+    if (!showPriceFilter || (priceMin === 0 && priceMax === 0)) return true;
+    var price = parseFloat(a.price) || 0;
+    if (a.category === "free" || !a.price) return priceMin === 0;
+    if (priceMin > 0 && price < priceMin) return false;
+    if (priceMax > 0 && price > priceMax) return false;
+    return true;
   }).sort(function (a, b) {
     if (sortBy === "newest") {
       return new Date(b.created_at || 0) - new Date(a.created_at || 0);
@@ -1641,7 +1660,112 @@ function AdsTab(_ref6) {
   }, /*#__PURE__*/React.createElement("option", { value: "newest" }, lang === "ru" ? "Новые" : "Жаңалар"),
      /*#__PURE__*/React.createElement("option", { value: "oldest" }, lang === "ru" ? "Старые" : "Ескілер"),
      /*#__PURE__*/React.createElement("option", { value: "expiring" }, lang === "ru" ? "Скоро истекут" : "Мерзімі бітеді")
-  ))), filtered.length === 0 ? /*#__PURE__*/React.createElement("div", {
+  ), /*#__PURE__*/React.createElement("button", {
+    onClick: function() { setShowPriceFilter(function(v) { return !v; }); },
+    style: {
+      flexShrink: 0,
+      padding: "6px 12px",
+      borderRadius: 8,
+      border: showPriceFilter ? "1.5px solid var(--green)" : "1.5px solid var(--border)",
+      background: showPriceFilter ? "var(--green)" : "var(--bg2)",
+      color: showPriceFilter ? "#fff" : "var(--text2)",
+      fontFamily: "var(--font-b)",
+      fontSize: 12,
+      fontWeight: 700,
+      cursor: "pointer",
+      transition: "all .18s",
+      whiteSpace: "nowrap"
+    }
+  }, lang === "ru" ? "💰 Цена" : "💰 Баға")
+  ),
+  showPriceFilter && /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: "12px 16px",
+      background: "var(--bg2)",
+      borderBottom: "1px solid var(--border)",
+      display: "flex",
+      flexDirection: "column",
+      gap: 10
+    }
+  },
+    /*#__PURE__*/React.createElement("div", {
+      style: { display: "flex", alignItems: "center", justifyContent: "space-between" }
+    },
+      /*#__PURE__*/React.createElement("span", {
+        style: { fontSize: 13, fontWeight: 700, color: "var(--text)", fontFamily: "var(--font-b)" }
+      }, lang === "ru" ? "Фильтр по цене" : "Баға бойынша сүзгі"),
+      /*#__PURE__*/React.createElement("button", {
+        onClick: function() { setPriceMin(0); setPriceMax(0); },
+        style: {
+          fontSize: 11, color: "var(--green)", fontWeight: 700,
+          background: "none", border: "none", cursor: "pointer", fontFamily: "var(--font-b)"
+        }
+      }, lang === "ru" ? "Сбросить" : "Тазалау")
+    ),
+    /*#__PURE__*/React.createElement("div", {
+      style: { display: "flex", gap: 10, alignItems: "center" }
+    },
+      /*#__PURE__*/React.createElement("div", { style: { flex: 1 } },
+        /*#__PURE__*/React.createElement("label", {
+          style: { fontSize: 11, color: "var(--text3)", fontWeight: 600, display: "block", marginBottom: 4 }
+        }, lang === "ru" ? "От (₸)" : "Бастап (₸)"),
+        /*#__PURE__*/React.createElement("input", {
+          type: "range",
+          min: 0,
+          max: 500000,
+          step: 1000,
+          value: priceMin,
+          onChange: function(e) {
+            var v = parseInt(e.target.value);
+            setPriceMin(v);
+            if (priceMax > 0 && v > priceMax) setPriceMax(v);
+          },
+          style: { width: "100%", accentColor: "var(--green)" }
+        }),
+        /*#__PURE__*/React.createElement("div", {
+          style: { fontSize: 13, fontWeight: 700, color: "var(--green)", textAlign: "center", marginTop: 2 }
+        }, priceMin === 0 ? (lang === "ru" ? "Любая" : "Кез келген") : priceMin.toLocaleString("ru-RU") + " ₸")
+      ),
+      /*#__PURE__*/React.createElement("div", {
+        style: { width: 1, height: 40, background: "var(--border)", flexShrink: 0 }
+      }),
+      /*#__PURE__*/React.createElement("div", { style: { flex: 1 } },
+        /*#__PURE__*/React.createElement("label", {
+          style: { fontSize: 11, color: "var(--text3)", fontWeight: 600, display: "block", marginBottom: 4 }
+        }, lang === "ru" ? "До (₸)" : "Дейін (₸)"),
+        /*#__PURE__*/React.createElement("input", {
+          type: "range",
+          min: 0,
+          max: 500000,
+          step: 1000,
+          value: priceMax,
+          onChange: function(e) {
+            var v = parseInt(e.target.value);
+            setPriceMax(v);
+            if (priceMin > 0 && v < priceMin) setPriceMin(v);
+          },
+          style: { width: "100%", accentColor: "var(--green)" }
+        }),
+        /*#__PURE__*/React.createElement("div", {
+          style: { fontSize: 13, fontWeight: 700, color: "var(--green)", textAlign: "center", marginTop: 2 }
+        }, priceMax === 0 ? (lang === "ru" ? "Любая" : "Кез келген") : priceMax.toLocaleString("ru-RU") + " ₸")
+      )
+    ),
+    (priceMin > 0 || priceMax > 0) && /*#__PURE__*/React.createElement("div", {
+      style: {
+        padding: "6px 12px",
+        background: "rgba(76,175,80,.1)",
+        borderRadius: 8,
+        fontSize: 12,
+        color: "var(--green)",
+        fontWeight: 700,
+        textAlign: "center"
+      }
+    }, lang === "ru"
+      ? "Показываю: " + (priceMin > 0 ? "от " + priceMin.toLocaleString("ru-RU") + " ₸" : "") + (priceMin > 0 && priceMax > 0 ? " — " : "") + (priceMax > 0 ? "до " + priceMax.toLocaleString("ru-RU") + " ₸" : "")
+      : "Көрсетілуде: " + (priceMin > 0 ? priceMin.toLocaleString("ru-RU") + " ₸ бастап" : "") + (priceMin > 0 && priceMax > 0 ? " — " : "") + (priceMax > 0 ? priceMax.toLocaleString("ru-RU") + " ₸ дейін" : "")
+    )
+  )), filtered.length === 0 ? /*#__PURE__*/React.createElement("div", {
     className: "empty"
   }, /*#__PURE__*/React.createElement("div", { className: "empty-icon" },
     search ? "\uD83D\uDD0D" : cat !== "all" ? (CAT_ICONS[cat] || "\uD83D\uDCED") : "\uD83D\uDCED"),
