@@ -1189,6 +1189,10 @@ function App() {
     _useState22 = _slicedToArray(_useState21, 2),
     adminOk = _useState22[0],
     setAdminOk = _useState22[1];
+  var _useState_rk = useState(0),
+    _useState_rk2 = _slicedToArray(_useState_rk, 2),
+    refreshKey = _useState_rk2[0],
+    setRefreshKey = _useState_rk2[1];
   var did = getDeviceId();
   var t = T[lang];
   useEffect(function () {
@@ -1198,11 +1202,17 @@ function App() {
       off = function off() {
         return setOnline(false);
       };
+    // Listen for polling updates from navi-api
+    var onRefresh = function onRefresh() {
+      setRefreshKey(function(k) { return k + 1; });
+    };
     window.addEventListener("online", on);
     window.addEventListener("offline", off);
+    window.addEventListener("navi:refresh", onRefresh);
     return function () {
       window.removeEventListener("online", on);
       window.removeEventListener("offline", off);
+      window.removeEventListener("navi:refresh", onRefresh);
     };
   }, []);
   function switchLang() {
@@ -1300,16 +1310,19 @@ function App() {
       minHeight: 0
     }
   }, tab === "ads" && /*#__PURE__*/React.createElement(AdsTab, {
+    key: "ads-" + refreshKey,
     t: t,
     lang: lang,
     did: did,
     showToast: showT
   }), tab === "biz" && /*#__PURE__*/React.createElement(BizTab, {
+    key: "biz-" + refreshKey,
     t: t,
     lang: lang,
     did: did,
     showToast: showT
   }), tab === "feed" && /*#__PURE__*/React.createElement(FeedTab, {
+    key: "feed-" + refreshKey,
     t: t,
     lang: lang,
     did: did,
@@ -8607,6 +8620,32 @@ var _rootEl = document.getElementById("root");
 _rootEl.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100dvh;background:#f7f5f2;font-family:Manrope,sans-serif;color:#1a2e1e;flex-direction:column;gap:10px"><div style="font-size:36px">🌿</div><div style="font-size:14px;font-weight:600;opacity:.5">Загрузка...</div></div>';
 initNaviFromApi().then(function () {
   ReactDOM.createRoot(_rootEl).render(/*#__PURE__*/React.createElement(App, null));
+  // ── Polling: auto-refresh shared data every 15 seconds ──────────────────
+  (function startPolling() {
+    setInterval(function() {
+      fetch('/api/navi/init')
+        .then(function(r) { return r.ok ? r.json() : null; })
+        .then(function(data) {
+          if (!data) return;
+          var updated = false;
+          Object.keys(data).forEach(function(key) {
+            try {
+              var newVal = JSON.stringify(data[key]);
+              var oldVal = localStorage.getItem(key);
+              if (newVal !== oldVal) {
+                _origLSSet(key, newVal);
+                updated = true;
+              }
+            } catch(e) {}
+          });
+          if (updated) {
+            // Trigger React re-render by dispatching a custom event
+            window.dispatchEvent(new CustomEvent('navi:refresh', { detail: data }));
+          }
+        })
+        .catch(function() {});
+    }, 15000);
+  })();
 });
 </script>
 <script>
