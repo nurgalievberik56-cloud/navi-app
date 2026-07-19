@@ -1454,6 +1454,10 @@ function AdsTab(_ref6) {
     _useState34 = _slicedToArray(_useState33, 2),
     search = _useState34[0],
     setSearch = _useState34[1];
+  var _useState_sort = useState("newest"),
+    _useState_sort2 = _slicedToArray(_useState_sort, 2),
+    sortBy = _useState_sort2[0],
+    setSortBy = _useState_sort2[1];
   var _useState35 = useState(false),
     _useState36 = _slicedToArray(_useState35, 2),
     showCreate = _useState36[0],
@@ -1486,7 +1490,16 @@ function AdsTab(_ref6) {
   }).filter(function (a) {
     return cat === "all" || a.category === cat;
   }).filter(function (a) {
-    return !search || a.title.toLowerCase().includes(search.toLowerCase()) || a.description.toLowerCase().includes(search.toLowerCase());
+    return !search || a.title.toLowerCase().includes(search.toLowerCase()) || (a.description || "").toLowerCase().includes(search.toLowerCase());
+  }).sort(function (a, b) {
+    if (sortBy === "newest") {
+      return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+    } else if (sortBy === "oldest") {
+      return new Date(a.created_at || 0) - new Date(b.created_at || 0);
+    } else if (sortBy === "expiring") {
+      return new Date(a.expires_at || 0) - new Date(b.expires_at || 0);
+    }
+    return 0;
   });
   function handleCreate(data) {
     setAds(function (p) {
@@ -1593,7 +1606,10 @@ function AdsTab(_ref6) {
       return setSearch(e.target.value);
     }
   }), /*#__PURE__*/React.createElement("div", {
-    className: "cat-scroll"
+    style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "cat-scroll",
+    style: { flex: 1 }
   }, cats.map(function (c) {
     return /*#__PURE__*/React.createElement("button", {
       key: c,
@@ -1602,7 +1618,26 @@ function AdsTab(_ref6) {
         return setCat(c);
       }
     }, c !== "all" && CAT_ICONS[c] + " ", catLabel[c]);
-  }))), filtered.length === 0 ? /*#__PURE__*/React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("select", {
+    value: sortBy,
+    onChange: function onChange(e) { return setSortBy(e.target.value); },
+    style: {
+      flexShrink: 0,
+      padding: "6px 10px",
+      borderRadius: 8,
+      border: "1.5px solid var(--border)",
+      background: "var(--bg2)",
+      color: "var(--text2)",
+      fontFamily: "var(--font-b)",
+      fontSize: 12,
+      fontWeight: 700,
+      cursor: "pointer",
+      outline: "none"
+    }
+  }, /*#__PURE__*/React.createElement("option", { value: "newest" }, lang === "ru" ? "Новые" : "Жаңалар"),
+     /*#__PURE__*/React.createElement("option", { value: "oldest" }, lang === "ru" ? "Старые" : "Ескілер"),
+     /*#__PURE__*/React.createElement("option", { value: "expiring" }, lang === "ru" ? "Скоро истекут" : "Мерзімі бітеді")
+  ))), filtered.length === 0 ? /*#__PURE__*/React.createElement("div", {
     className: "empty"
   }, /*#__PURE__*/React.createElement("div", {
     className: "empty-icon"
