@@ -242,6 +242,13 @@ body{font-family:var(--font-b);color:var(--text);font-size:15px;line-height:1.5;
 .entrepreneur-banner-title{font-family:var(--font-d);font-size:14px;font-weight:700;color:#fff}
 .entrepreneur-banner-sub{font-size:12px;color:rgba(255,255,255,.65);font-weight:500}
 .entrepreneur-banner-arrow{font-size:20px;color:#fff;opacity:.7}
+/* FAVORITES */
+.biz-fav-btn{position:absolute;top:10px;right:10px;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.85);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 2px 8px rgba(0,0,0,.15);transition:transform .15s,background .15s;z-index:5;backdrop-filter:blur(4px)}
+.biz-fav-btn:active{transform:scale(.85)}
+.biz-fav-btn.active{background:rgba(255,80,80,.12)}
+.fav-filter-row{display:flex;gap:6px;padding:0 0 4px}
+.fav-filter-btn{flex:1;padding:7px 0;border-radius:20px;border:2px solid var(--border);background:transparent;color:var(--text2);font-size:12px;font-weight:700;cursor:pointer;transition:all .18s;font-family:var(--font-b)}
+.fav-filter-btn.active{border-color:var(--red,#e53935);background:rgba(229,57,53,.08);color:var(--red,#e53935)}
 </style>
 </head>
 <body>
@@ -2633,6 +2640,23 @@ function BizTab(_ref14) {
   var salesCats = ["all"].concat(SALES_CATS);
   var serviceCats = ["all"].concat(SERVICE_CATS);
   var cats = bizType === "sales" ? salesCats : serviceCats;
+  var _useState_favs = useState(function() {
+    try { return JSON.parse(localStorage.getItem("navi_fav_bizs") || "[]"); } catch(e) { return []; }
+  }),
+    _useState_favs2 = _slicedToArray(_useState_favs, 2),
+    favBizs = _useState_favs2[0],
+    setFavBizs = _useState_favs2[1];
+  var _useState_showFav = useState(false),
+    _useState_showFav2 = _slicedToArray(_useState_showFav, 2),
+    showFavOnly = _useState_showFav2[0],
+    setShowFavOnly = _useState_showFav2[1];
+  function toggleFav(id) {
+    setFavBizs(function(prev) {
+      var next = prev.includes(id) ? prev.filter(function(x) { return x !== id; }) : [].concat(_toConsumableArray(prev), [id]);
+      localStorage.setItem("navi_fav_bizs", JSON.stringify(next));
+      return next;
+    });
+  }
   var _useState_bizSearch = useState(""),
     _useState_bizSearch2 = _slicedToArray(_useState_bizSearch, 2),
     bizSearch = _useState_bizSearch2[0],
@@ -2665,6 +2689,9 @@ function BizTab(_ref14) {
     if (!bizSearch.trim()) return true;
     var q = bizSearch.toLowerCase();
     return (b.name || "").toLowerCase().includes(q) || (b.description || "").toLowerCase().includes(q);
+  }).sort(function (a, b) {
+  }).filter(function (b) {
+    return !showFavOnly || favBizs.includes(b.id);
   }).sort(function (a, b) {
     if (bizSort === "rating") return (b.rating || 0) - (a.rating || 0);
     if (bizSort === "alpha") return (a.name || "").localeCompare(b.name || "", lang === "ru" ? "ru" : "kk");
@@ -2789,6 +2816,17 @@ function BizTab(_ref14) {
     value: bizSearch,
     onChange: function onChange(e) { return setBizSearch(e.target.value); }
   }),
+  /*#__PURE__*/React.createElement("div", { className: "fav-filter-row" },
+    /*#__PURE__*/React.createElement("button", {
+      className: "fav-filter-btn".concat(!showFavOnly ? " active" : ""),
+      style: !showFavOnly ? { borderColor: "var(--green)", background: "var(--green-bg)", color: "var(--green)" } : {},
+      onClick: function() { setShowFavOnly(false); }
+    }, lang === "ru" ? "Все бизнесы" : "Барлық бизнес"),
+    /*#__PURE__*/React.createElement("button", {
+      className: "fav-filter-btn".concat(showFavOnly ? " active" : ""),
+      onClick: function() { setShowFavOnly(true); }
+    }, (lang === "ru" ? "❤️ Избранное" : "❤️ Таңдаулы") + (favBizs.length > 0 ? " (" + favBizs.length + ")" : ""))
+  ),
   /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
@@ -2925,7 +2963,9 @@ function BizTab(_ref14) {
       },
       onClick: function onClick() {
         return setSelected(b);
-      }
+      },
+      isFav: favBizs.includes(b.id),
+      onToggleFav: toggleFav
     });
   })));
 }
@@ -2935,7 +2975,9 @@ function BizCard(_ref17) {
     lang = _ref17.lang,
     style = _ref17.style,
     onClick = _ref17.onClick,
-    highlight = _ref17.highlight;
+    highlight = _ref17.highlight,
+    isFav = _ref17.isFav,
+    onToggleFav = _ref17.onToggleFav;
   function hlBiz(text) {
     if (!highlight || !text) return text;
     var idx = text.toLowerCase().indexOf(highlight.toLowerCase());
@@ -2962,7 +3004,13 @@ function BizCard(_ref17) {
     }
   }, BIZ_ICONS[b.category]), /*#__PURE__*/React.createElement("div", {
     className: "biz-logo-abs"
-  }, BIZ_ICONS[b.category])), /*#__PURE__*/React.createElement("div", {
+  }, BIZ_ICONS[b.category]),
+  onToggleFav && /*#__PURE__*/React.createElement("button", {
+    className: "biz-fav-btn".concat(isFav ? " active" : ""),
+    title: isFav ? (lang === "ru" ? "Убрать из избранного" : "Таңдаулыдан алып тастау") : (lang === "ru" ? "В избранное" : "Таңдаулыға қосу"),
+    onClick: function(e) { e.stopPropagation(); onToggleFav(b.id); }
+  }, isFav ? "\u2764\uFE0F" : "\uD83E\uDD0D")
+  ), /*#__PURE__*/React.createElement("div", {
     className: "biz-body"
   }, /*#__PURE__*/React.createElement("div", {
     className: "biz-name"
