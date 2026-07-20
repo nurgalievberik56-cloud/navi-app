@@ -2633,6 +2633,10 @@ function BizTab(_ref14) {
   var salesCats = ["all"].concat(SALES_CATS);
   var serviceCats = ["all"].concat(SERVICE_CATS);
   var cats = bizType === "sales" ? salesCats : serviceCats;
+  var _useState_bizSearch = useState(""),
+    _useState_bizSearch2 = _slicedToArray(_useState_bizSearch, 2),
+    bizSearch = _useState_bizSearch2[0],
+    setBizSearch = _useState_bizSearch2[1];
   var allCatLabel = {
     all: t.all,
     store: t.store,
@@ -2653,6 +2657,10 @@ function BizTab(_ref14) {
     return (bizType === "sales" ? SALES_CATS : SERVICE_CATS).includes(b.category) || b.bizType === bizType;
   }).filter(function (b) {
     return cat === "all" || b.category === cat;
+  }).filter(function (b) {
+    if (!bizSearch.trim()) return true;
+    var q = bizSearch.toLowerCase();
+    return (b.name || "").toLowerCase().includes(q) || (b.description || "").toLowerCase().includes(q);
   });
   if (selected) return /*#__PURE__*/React.createElement("div", {
     className: "scroll-area"
@@ -2765,7 +2773,14 @@ function BizTab(_ref14) {
     className: "entrepreneur-banner-arrow"
   }, "\u203A")), /*#__PURE__*/React.createElement("div", {
     className: "filter-bar"
-  }, /*#__PURE__*/React.createElement("div", {
+  },
+  /*#__PURE__*/React.createElement("input", {
+    className: "search-input",
+    placeholder: lang === "ru" ? "Поиск бизнесов..." : "Бизнес іздеу...",
+    value: bizSearch,
+    onChange: function onChange(e) { return setBizSearch(e.target.value); }
+  }),
+  /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 8,
@@ -2804,13 +2819,50 @@ function BizTab(_ref14) {
         return setCat(c);
       }
     }, c !== "all" && BIZ_ICONS[c] + " ", allCatLabel[c]);
-  }))), filtered.length === 0 ? /*#__PURE__*/React.createElement("div", {
+  }))),
+  (filtered.length > 0 || bizSearch || cat !== "all") && /*#__PURE__*/React.createElement("div", {
+    className: "results-bar"
+  },
+    /*#__PURE__*/React.createElement("span", { className: "results-count" },
+      lang === "ru"
+        ? "Найдено: " + filtered.length + " " + (filtered.length === 1 ? "бизнес" : filtered.length < 5 ? "бизнеса" : "бизнесов")
+        : "Табылды: " + filtered.length + " бизнес"
+    ),
+    cat !== "all" && /*#__PURE__*/React.createElement("button", {
+      className: "active-filter-tag",
+      onClick: function() { setCat("all"); }
+    }, (BIZ_ICONS[cat] || "\uD83C\uDFE2") + " " + (allCatLabel[cat] || cat) + " \xD7"),
+    bizSearch && /*#__PURE__*/React.createElement("span", { className: "search-hint" },
+      lang === "ru" ? "\uD83D\uDD0D по названию и описанию" : "\uD83D\uDD0D атауы мен сипаттамасы бойынша"
+    )
+  ),
+  filtered.length === 0 ? /*#__PURE__*/React.createElement("div", {
     className: "empty"
   }, /*#__PURE__*/React.createElement("div", {
     className: "empty-icon"
-  }, bizType === "sales" ? "🛒" : "⚙️"), /*#__PURE__*/React.createElement("div", {
-    className: "empty-text"
-  }, t.no_biz)) : /*#__PURE__*/React.createElement("div", {
+  }, bizSearch ? "\uD83D\uDD0D" : bizType === "sales" ? "\uD83D\uDED2" : "\u2699\uFE0F"),
+  /*#__PURE__*/React.createElement("div", { className: "empty-title" },
+    bizSearch
+      ? (lang === "ru" ? "\u041D\u0438\u0447\u0435\u0433\u043E \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u043E" : "\u0415\u0448\u0442\u0435\u04A3\u0435 \u0442\u0430\u0431\u044B\u043B\u043C\u0430\u0434\u044B")
+      : (lang === "ru" ? "\u0411\u0438\u0437\u043D\u0435\u0441\u043E\u0432 \u043F\u043E\u043A\u0430 \u043D\u0435\u0442" : "\u0411\u0438\u0437\u043D\u0435\u0441\u0442\u0435\u0440 \u0436\u043E\u049B")
+  ),
+  /*#__PURE__*/React.createElement("div", { className: "empty-text" },
+    bizSearch
+      ? (lang === "ru" ? "\u041F\u043E\u043F\u0440\u043E\u0431\u0443\u0439\u0442\u0435 \u0438\u0437\u043C\u0435\u043D\u0438\u0442\u044C \u0437\u0430\u043F\u0440\u043E\u0441 \u0438\u043B\u0438 \u0432\u044B\u0431\u0440\u0430\u0442\u044C \u0434\u0440\u0443\u0433\u0443\u044E \u043A\u0430\u0442\u0435\u0433\u043E\u0440\u0438\u044E" : "\u0421\u04B1\u0440\u0430\u043D\u044B\u0441\u0442\u044B \u04E9\u0437\u0433\u0435\u0440\u0442\u0456\u043F \u043D\u0435\u043C\u0435\u0441\u0435 \u0431\u0430\u0441\u049B\u0430 \u0441\u0430\u043D\u0430\u0442\u0442\u044B \u0442\u0430\u04A3\u0434\u0430\u043F \u043A\u04E9\u0440\u0456\u04A3\u0456\u0437")
+      : cat !== "all"
+        ? (lang === "ru" ? "\u0412 \u044D\u0442\u043E\u0439 \u043A\u0430\u0442\u0435\u0433\u043E\u0440\u0438\u0438 \u043F\u043E\u043A\u0430 \u043D\u0435\u0442 \u0431\u0438\u0437\u043D\u0435\u0441\u043E\u0432" : "\u0411\u04B1\u043B \u0441\u0430\u043D\u0430\u0442\u0442\u0430 \u0431\u0438\u0437\u043D\u0435\u0441\u0442\u0435\u0440 \u0436\u043E\u049B")
+        : (lang === "ru" ? "\u0417\u0434\u0435\u0441\u044C \u043F\u043E\u044F\u0432\u044F\u0442\u0441\u044F \u0431\u0438\u0437\u043D\u0435\u0441\u044B \u0432\u0430\u0448\u0435\u0433\u043E \u0433\u043E\u0440\u043E\u0434\u0430" : "\u041C\u04B1\u043D\u0434\u0430 \u049B\u0430\u043B\u0430 \u0431\u0438\u0437\u043D\u0435\u0441\u0442\u0435\u0440\u0456 \u043F\u0430\u0439\u0434\u0430 \u0431\u043E\u043B\u0430\u0434\u044B")
+  ),
+  (bizSearch || cat !== "all") && /*#__PURE__*/React.createElement("div", { className: "empty-hint" },
+    cat !== "all" && /*#__PURE__*/React.createElement("button", {
+      className: "empty-hint-chip",
+      onClick: function() { setCat("all"); }
+    }, lang === "ru" ? "\u0412\u0441\u0435 \u043A\u0430\u0442\u0435\u0433\u043E\u0440\u0438\u0438" : "\u0411\u0430\u0440\u043B\u044B\u049B \u0441\u0430\u043D\u0430\u0442\u0442\u0430\u0440"),
+    bizSearch && /*#__PURE__*/React.createElement("button", {
+      className: "empty-hint-chip",
+      onClick: function() { setBizSearch(""); }
+    }, lang === "ru" ? "\xD7 \u041E\u0447\u0438\u0441\u0442\u0438\u0442\u044C \u043F\u043E\u0438\u0441\u043A" : "\xD7 \u0406\u0437\u0434\u0435\u0443\u0434\u0456 \u0442\u0430\u0437\u0430\u043B\u0430\u0443")
+  )) : /*#__PURE__*/React.createElement("div", {
     className: "biz-list"
   }, filtered.map(function (b, i) {
     return /*#__PURE__*/React.createElement(BizCard, {
@@ -2818,6 +2870,7 @@ function BizTab(_ref14) {
       biz: b,
       t: t,
       lang: lang,
+      highlight: bizSearch,
       style: {
         animationDelay: "".concat(i * .05, "s")
       },
@@ -2832,7 +2885,18 @@ function BizCard(_ref17) {
     t = _ref17.t,
     lang = _ref17.lang,
     style = _ref17.style,
-    onClick = _ref17.onClick;
+    onClick = _ref17.onClick,
+    highlight = _ref17.highlight;
+  function hlBiz(text) {
+    if (!highlight || !text) return text;
+    var idx = text.toLowerCase().indexOf(highlight.toLowerCase());
+    if (idx === -1) return text;
+    return /*#__PURE__*/React.createElement("span", null,
+      text.slice(0, idx),
+      /*#__PURE__*/React.createElement("mark", { className: "search-highlight" }, text.slice(idx, idx + highlight.length)),
+      text.slice(idx + highlight.length)
+    );
+  }
   var open = isOpen(b.schedule);
   return /*#__PURE__*/React.createElement("div", {
     className: "card",
@@ -2853,7 +2917,7 @@ function BizCard(_ref17) {
     className: "biz-body"
   }, /*#__PURE__*/React.createElement("div", {
     className: "biz-name"
-  }, b.name), /*#__PURE__*/React.createElement("div", {
+  }, hlBiz(b.name)), /*#__PURE__*/React.createElement("div", {
     className: "biz-meta"
   }, /*#__PURE__*/React.createElement("span", {
     style: {
@@ -2866,7 +2930,7 @@ function BizCard(_ref17) {
     className: "biz-status-badge ".concat(open ? "open-badge" : "closed-badge")
   }, open ? t.open : t.closed)), /*#__PURE__*/React.createElement("div", {
     className: "biz-desc"
-  }, b.description), /*#__PURE__*/React.createElement("div", {
+  }, hlBiz(b.description)), /*#__PURE__*/React.createElement("div", {
     className: "biz-actions"
   }, /*#__PURE__*/React.createElement("button", {
     className: "btn btn-primary btn-sm",
