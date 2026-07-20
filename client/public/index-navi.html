@@ -88,6 +88,12 @@ body{font-family:var(--font-b);color:var(--text);font-size:15px;line-height:1.5;
 .card-body{padding:14px}
 .card-title{font-family:var(--font-d);font-size:14px;font-weight:700;margin-bottom:4px;line-height:1.3;color:var(--text)}
 .card-desc{font-size:12px;color:var(--text2);margin-bottom:10px;font-weight:500}
+.search-highlight{background:rgba(180,140,60,0.25);color:var(--text);border-radius:3px;padding:0 2px;font-weight:700}
+.results-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:4px 16px 6px;background:var(--bg2);border-bottom:1px solid var(--border)}
+.results-count{font-size:12px;color:var(--text3);font-weight:600;white-space:nowrap;flex-shrink:0}
+.active-filter-tag{display:inline-flex;align-items:center;gap:4px;background:var(--green-bg);color:var(--green);border:1px solid rgba(45,106,63,.3);border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700;cursor:pointer;transition:background .15s;flex-shrink:0}
+.active-filter-tag:hover{background:var(--green);color:#fff}
+.search-hint{font-size:11px;color:var(--text3);padding:2px 0 0 0;font-style:italic;flex:1;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .card-price{font-family:var(--font-b);font-size:17px;font-weight:800;color:var(--text);margin-bottom:12px}
 .card-actions{display:flex;gap:8px;flex-wrap:wrap}
 /* MODAL */
@@ -1765,7 +1771,28 @@ function AdsTab(_ref6) {
       ? "Показываю: " + (priceMin > 0 ? "от " + priceMin.toLocaleString("ru-RU") + " ₸" : "") + (priceMin > 0 && priceMax > 0 ? " — " : "") + (priceMax > 0 ? "до " + priceMax.toLocaleString("ru-RU") + " ₸" : "")
       : "Көрсетілуде: " + (priceMin > 0 ? priceMin.toLocaleString("ru-RU") + " ₸ бастап" : "") + (priceMin > 0 && priceMax > 0 ? " — " : "") + (priceMax > 0 ? priceMax.toLocaleString("ru-RU") + " ₸ дейін" : "")
     )
-  )), filtered.length === 0 ? /*#__PURE__*/React.createElement("div", {
+  )),
+  (filtered.length > 0 || search || cat !== "all" || priceMin > 0 || priceMax > 0) && /*#__PURE__*/React.createElement("div", {
+    className: "results-bar"
+  },
+    /*#__PURE__*/React.createElement("span", { className: "results-count" },
+      lang === "ru"
+        ? "Найдено: " + filtered.length + " " + (filtered.length === 1 ? "объявление" : filtered.length < 5 ? "объявления" : "объявлений")
+        : "Табылды: " + filtered.length + " хабарландыру"
+    ),
+    cat !== "all" && /*#__PURE__*/React.createElement("button", {
+      className: "active-filter-tag",
+      onClick: function() { setCat("all"); }
+    }, (CAT_ICONS[cat] || "📦") + " " + (cat === "sell" ? (lang === "ru" ? "Продаю" : "Сатамын") : cat === "buy" ? (lang === "ru" ? "Куплю" : "Сатып аламын") : cat === "services" ? (lang === "ru" ? "Услуги" : "Қызметтер") : (lang === "ru" ? "Бесплатно" : "Тегін")) + " ×"),
+    (priceMin > 0 || priceMax > 0) && /*#__PURE__*/React.createElement("button", {
+      className: "active-filter-tag",
+      onClick: function() { setPriceMin(0); setPriceMax(0); setShowPriceFilter(false); }
+    }, "💰 " + (priceMin > 0 ? priceMin.toLocaleString("ru-RU") + " ₸" : "") + (priceMin > 0 && priceMax > 0 ? " – " : "") + (priceMax > 0 ? priceMax.toLocaleString("ru-RU") + " ₸" : "") + " ×"),
+    search && /*#__PURE__*/React.createElement("span", { className: "search-hint" },
+      lang === "ru" ? "🔍 по названию и описанию" : "🔍 атауы мен сипаттамасы бойынша"
+    )
+  ),
+  filtered.length === 0 ? /*#__PURE__*/React.createElement("div", {
     className: "empty"
   }, /*#__PURE__*/React.createElement("div", { className: "empty-icon" },
     search ? "\uD83D\uDD0D" : cat !== "all" ? (CAT_ICONS[cat] || "\uD83D\uDCED") : "\uD83D\uDCED"),
@@ -1796,6 +1823,7 @@ function AdsTab(_ref6) {
       t: t,
       lang: lang,
       isOwn: a.device_id === did,
+      highlight: search,
       onDelete: function onDelete() {
         return handleDelete(a.id);
       },
@@ -1869,7 +1897,18 @@ function AdCard(_ref7) {
     onDelete = _ref7.onDelete,
     onExtend = _ref7.onExtend,
     onReport = _ref7.onReport,
-    style = _ref7.style;
+    style = _ref7.style,
+    highlight = _ref7.highlight;
+  function hl(text) {
+    if (!highlight || !text) return text;
+    var idx = text.toLowerCase().indexOf(highlight.toLowerCase());
+    if (idx === -1) return text;
+    return /*#__PURE__*/React.createElement("span", null,
+      text.slice(0, idx),
+      /*#__PURE__*/React.createElement("mark", { className: "search-highlight" }, text.slice(idx, idx + highlight.length)),
+      text.slice(idx + highlight.length)
+    );
+  }
   var dl = daysLeft(a.expires_at);
   var catLabel = {
     sell: t.sell,
@@ -1895,9 +1934,9 @@ function AdCard(_ref7) {
     className: "card-body"
   }, /*#__PURE__*/React.createElement("div", {
     className: "card-title"
-  }, a.title), /*#__PURE__*/React.createElement("div", {
+  }, hl(a.title)), /*#__PURE__*/React.createElement("div", {
     className: "card-desc"
-  }, a.description), a.price > 0 && /*#__PURE__*/React.createElement("div", {
+  }, hl(a.description)), a.price > 0 && /*#__PURE__*/React.createElement("div", {
     className: "card-price"
   }, a.price.toLocaleString(), " \u20B8"), a.price === 0 && /*#__PURE__*/React.createElement("div", {
     className: "card-price",
