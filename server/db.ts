@@ -222,6 +222,32 @@ export async function listFeedPosts() {
   return db.select().from(feedPosts).where(eq(feedPosts.isActive, true)).orderBy(desc(feedPosts.createdAt)).limit(50);
 }
 
+export async function listFeedPostsWithReactions() {
+  const db = await getDb();
+  if (!db) return [];
+  const posts = await db.select().from(feedPosts).where(eq(feedPosts.isActive, true)).orderBy(desc(feedPosts.createdAt)).limit(100);
+  if (posts.length === 0) return [];
+  const reactions = await db.select().from(feedReactions);
+  return posts.map(post => {
+    const postReactions = reactions.filter(r => r.postId === post.id);
+    const counts: Record<string, number> = { "👍": 0, "❤️": 0, "👏": 0, "😮": 0 };
+    for (const r of postReactions) {
+      if (counts[r.emoji] !== undefined) counts[r.emoji]++;
+      else counts[r.emoji] = 1;
+    }
+    return { ...post, reactions: counts };
+  });
+}
+
+export async function deleteFeedPost(id: number, deviceId: string) {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  await db.update(feedPosts)
+    .set({ isActive: false })
+    .where(and(eq(feedPosts.id, id), eq(feedPosts.deviceId, deviceId)));
+  return { success: true };
+}
+
 export async function createFeedPost(data: typeof feedPosts.$inferInsert) {
   const db = await getDb();
   if (!db) throw new Error("DB not available");

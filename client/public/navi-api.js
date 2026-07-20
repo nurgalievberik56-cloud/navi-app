@@ -365,17 +365,19 @@
   // ─── Feed API ───────────────────────────────────────────────────────────────
   async function getFeed() {
     const data = await trpc("feed.list", {});
-    if (!data) return JSON.parse(localStorage.getItem("navi_feed") || "[]");
+    if (!data) return [];
     return data.map(function (p) {
       return {
         id: String(p.id),
-        did: p.deviceId,
-        author: p.authorName || "Аноним",
-        bid: p.businessId ? String(p.businessId) : null,
-        media: p.mediaUrl || "",
-        mtype: p.mediaType || "image",
+        device_id: p.deviceId,
+        user_name: p.authorName || (p.deviceId ? "Пользователь" : "Аноним"),
+        photo: p.mediaType === "image" ? (p.mediaUrl || "") : "",
+        video: p.mediaType === "video" ? (p.mediaUrl || "") : "",
+        type: p.mediaType || "image",
         caption: p.caption || "",
-        ts: new Date(p.createdAt).getTime(),
+        reactions: p.reactions || { "👍": 0, "❤️": 0, "👏": 0, "😮": 0 },
+        created_at: new Date(p.createdAt).toISOString(),
+        expires_at: null,
       };
     });
   }
@@ -384,15 +386,37 @@
     const did = getDeviceId();
     const id = await trpc("feed.create", {
       deviceId: did,
-      authorName: postData.author || "",
-      businessId: postData.bid ? parseInt(postData.bid) : undefined,
-      mediaUrl: postData.media || "",
-      mediaType: postData.mtype || "image",
+      authorName: postData.user_name || "",
+      mediaUrl: postData.photo || postData.video || "",
+      mediaType: postData.type || "image",
       caption: postData.caption || "",
     }, "mutation");
     postData.id = id ? String(id) : postData.id;
-    postData.did = did;
+    postData.device_id = did;
     return postData;
+  }
+
+  async function deleteFeedPost(id) {
+    const did = getDeviceId();
+    return trpc("feed.delete", { id: parseInt(id), deviceId: did }, "mutation");
+  }
+
+  async function uploadFeedMedia(file) {
+    const formData = new FormData();
+    formData.append("file", file);
+    const resp = await fetch("/api/feed/upload", { method: "POST", body: formData });
+    if (!resp.ok) throw new Error("Upload failed: " + resp.status);
+    const data = await resp.json();
+    return data.url;
+  }
+
+  async function uploadFeedMediaBase64(dataUrl, type) {
+    // Convert base64 data URL to blob and upload
+    const res = await fetch(dataUrl);
+    const blob = await res.blob();
+    const ext = type === "video" ? "mp4" : "jpg";
+    const file = new File([blob], "feed." + ext, { type: blob.type || (type === "video" ? "video/mp4" : "image/jpeg") });
+    return uploadFeedMedia(file);
   }
 
   async function toggleReaction(postId, emoji) {
@@ -531,6 +555,9 @@
     // Feed
     getFeed: getFeed,
     createFeedPost: createFeedPost,
+    deleteFeedPost: deleteFeedPost,
+    uploadFeedMedia: uploadFeedMedia,
+    uploadFeedMediaBase64: uploadFeedMediaBase64,
     toggleReaction: toggleReaction,
 
     // Announcements

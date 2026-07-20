@@ -213,7 +213,7 @@ export const appRouter = router({
 
   // ─── Feed ──────────────────────────────────────────────────────────────────
   feed: router({
-    list: publicProcedure.query(() => db.listFeedPosts()),
+    list: publicProcedure.query(() => db.listFeedPostsWithReactions()),
 
     create: publicProcedure
       .input(z.object({
@@ -233,6 +233,10 @@ export const appRouter = router({
     listReactions: publicProcedure
       .input(z.object({ postId: z.number() }))
       .query(({ input }) => db.listReactionsForPost(input.postId)),
+
+    delete: publicProcedure
+      .input(z.object({ id: z.number(), deviceId: z.string() }))
+      .mutation(({ input }) => db.deleteFeedPost(input.id, input.deviceId)),
   }),
 
   // ─── Payment Requests ──────────────────────────────────────────────────────
