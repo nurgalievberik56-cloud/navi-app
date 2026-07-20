@@ -246,6 +246,8 @@ body{font-family:var(--font-b);color:var(--text);font-size:15px;line-height:1.5;
 .biz-fav-btn{position:absolute;top:10px;right:10px;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.85);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 2px 8px rgba(0,0,0,.15);transition:transform .15s,background .15s;z-index:5;backdrop-filter:blur(4px)}
 .biz-fav-btn:active{transform:scale(.85)}
 .biz-fav-btn.active{background:rgba(255,80,80,.12)}
+.feed-fav-btn{background:none;border:none;cursor:pointer;font-size:20px;padding:2px 6px;line-height:1;transition:transform .15s;flex-shrink:0}
+.feed-fav-btn:active{transform:scale(.8)}
 .fav-filter-row{display:flex;gap:6px;padding:0 0 4px}
 .fav-filter-btn{flex:1;padding:7px 0;border-radius:20px;border:2px solid var(--border);background:transparent;color:var(--text2);font-size:12px;font-weight:700;cursor:pointer;transition:all .18s;font-family:var(--font-b)}
 .fav-filter-btn.active{border-color:var(--red,#e53935);background:rgba(229,57,53,.08);color:var(--red,#e53935)}
@@ -6906,6 +6908,23 @@ function FeedMain(_ref43) {
     feedSearch = _useState_feedSearch2[0],
     setFeedSearch = _useState_feedSearch2[1];
   var videoRef = React.useRef();
+  var _useState_favFeeds = useState(function() {
+    try { return JSON.parse(localStorage.getItem("navi_fav_feeds") || "[]"); } catch(e) { return []; }
+  }),
+    _useState_favFeeds2 = _slicedToArray(_useState_favFeeds, 2),
+    favFeeds = _useState_favFeeds2[0],
+    setFavFeeds = _useState_favFeeds2[1];
+  var _useState_showFavFeed = useState(false),
+    _useState_showFavFeed2 = _slicedToArray(_useState_showFavFeed, 2),
+    showFavFeedOnly = _useState_showFavFeed2[0],
+    setShowFavFeedOnly = _useState_showFavFeed2[1];
+  function toggleFavFeed(id) {
+    setFavFeeds(function(prev) {
+      var next = prev.includes(id) ? prev.filter(function(x) { return x !== id; }) : [].concat(_toConsumableArray(prev), [id]);
+      localStorage.setItem("navi_fav_feeds", JSON.stringify(next));
+      return next;
+    });
+  }
   function react(itemId, emoji) {
     var prev = reactions[itemId];
     var nr = _objectSpread({}, reactions);
@@ -7297,6 +7316,14 @@ function FeedMain(_ref43) {
         flex: 1
       }
     }), !isOwn && /*#__PURE__*/React.createElement("button", {
+      onClick: function onClick() {
+        return setReportItem(item);
+    }, /*#__PURE__*/React.createElement("button", {
+      className: "feed-fav-btn",
+      title: favFeeds.includes(item.id) ? (lang === "ru" ? "Убрать из избранного" : "Таңдаулыдан алып тастау") : (lang === "ru" ? "В избранное" : "Таңдаулыға қосу"),
+      onClick: function(e) { e.stopPropagation(); toggleFavFeed(item.id); }
+    }, favFeeds.includes(item.id) ? "\u2764\uFE0F" : "\uD83E\uDD0D"),
+    !isOwn && /*#__PURE__*/React.createElement("button", {
       onClick: function onClick() {
         return setReportItem(item);
       },
