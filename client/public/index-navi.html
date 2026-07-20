@@ -2637,6 +2637,10 @@ function BizTab(_ref14) {
     _useState_bizSearch2 = _slicedToArray(_useState_bizSearch, 2),
     bizSearch = _useState_bizSearch2[0],
     setBizSearch = _useState_bizSearch2[1];
+  var _useState_bizSort = useState("rating"),
+    _useState_bizSort2 = _slicedToArray(_useState_bizSort, 2),
+    bizSort = _useState_bizSort2[0],
+    setBizSort = _useState_bizSort2[1];
   var allCatLabel = {
     all: t.all,
     store: t.store,
@@ -2661,6 +2665,11 @@ function BizTab(_ref14) {
     if (!bizSearch.trim()) return true;
     var q = bizSearch.toLowerCase();
     return (b.name || "").toLowerCase().includes(q) || (b.description || "").toLowerCase().includes(q);
+  }).sort(function (a, b) {
+    if (bizSort === "rating") return (b.rating || 0) - (a.rating || 0);
+    if (bizSort === "alpha") return (a.name || "").localeCompare(b.name || "", lang === "ru" ? "ru" : "kk");
+    if (bizSort === "newest") return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+    return 0;
   });
   if (selected) return /*#__PURE__*/React.createElement("div", {
     className: "scroll-area"
@@ -2819,7 +2828,43 @@ function BizTab(_ref14) {
         return setCat(c);
       }
     }, c !== "all" && BIZ_ICONS[c] + " ", allCatLabel[c]);
-  }))),
+  })),
+  /*#__PURE__*/React.createElement("div", {
+    style: { display: "flex", alignItems: "center", gap: 8 }
+  },
+  /*#__PURE__*/React.createElement("div", {
+    className: "cat-scroll",
+    style: { flex: 1 }
+  }, cats.map(function (c) {
+    return /*#__PURE__*/React.createElement("button", {
+      key: c,
+      className: "chip".concat(cat === c ? " active" : ""),
+      onClick: function onClick() {
+        return setCat(c);
+      }
+    }, c !== "all" && BIZ_ICONS[c] + " ", allCatLabel[c]);
+  })),
+  /*#__PURE__*/React.createElement("select", {
+    value: bizSort,
+    onChange: function onChange(e) { return setBizSort(e.target.value); },
+    style: {
+      flexShrink: 0,
+      padding: "6px 10px",
+      borderRadius: 8,
+      border: "1.5px solid var(--border)",
+      background: "var(--bg2)",
+      color: "var(--text2)",
+      fontFamily: "var(--font-b)",
+      fontSize: 12,
+      fontWeight: 600,
+      cursor: "pointer",
+      outline: "none"
+    }
+  },
+    /*#__PURE__*/React.createElement("option", { value: "rating" }, lang === "ru" ? "⭐ По рейтингу" : "⭐ Рейтинг"),
+    /*#__PURE__*/React.createElement("option", { value: "alpha" }, lang === "ru" ? "🔤 По алфавиту" : "🔤 Алфавит"),
+    /*#__PURE__*/React.createElement("option", { value: "newest" }, lang === "ru" ? "🕐 Новые" : "🕐 Жаңалар")
+  ))),
   (filtered.length > 0 || bizSearch || cat !== "all") && /*#__PURE__*/React.createElement("div", {
     className: "results-bar"
   },
@@ -2832,6 +2877,10 @@ function BizTab(_ref14) {
       className: "active-filter-tag",
       onClick: function() { setCat("all"); }
     }, (BIZ_ICONS[cat] || "\uD83C\uDFE2") + " " + (allCatLabel[cat] || cat) + " \xD7"),
+    bizSort !== "rating" && /*#__PURE__*/React.createElement("button", {
+      className: "active-filter-tag",
+      onClick: function() { setBizSort("rating"); }
+    }, (bizSort === "alpha" ? (lang === "ru" ? "🔤 По алфавиту" : "🔤 Алфавит") : (lang === "ru" ? "🕐 Новые" : "🕐 Жаңалар")) + " \xD7"),
     bizSearch && /*#__PURE__*/React.createElement("span", { className: "search-hint" },
       lang === "ru" ? "\uD83D\uDD0D по названию и описанию" : "\uD83D\uDD0D атауы мен сипаттамасы бойынша"
     )
