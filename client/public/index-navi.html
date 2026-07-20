@@ -6901,6 +6901,10 @@ function FeedMain(_ref43) {
     _useState178 = _slicedToArray(_useState177, 2),
     showPublish = _useState178[0],
     setShowPublish = _useState178[1];
+  var _useState_feedSearch = useState(""),
+    _useState_feedSearch2 = _slicedToArray(_useState_feedSearch, 2),
+    feedSearch = _useState_feedSearch2[0],
+    setFeedSearch = _useState_feedSearch2[1];
   var videoRef = React.useRef();
   function react(itemId, emoji) {
     var prev = reactions[itemId];
@@ -7200,9 +7204,39 @@ function FeedMain(_ref43) {
     className: "empty-icon"
   }, "\uD83D\uDCF8"), /*#__PURE__*/React.createElement("div", {
     className: "empty-text"
-  }, lang === "ru" ? "Лента пуста. Опубликуйте первым!" : "Лента бос. Бірінші жариялаңыз!")) : /*#__PURE__*/React.createElement("div", {
+  }, lang === "ru" ? "Лента пуста. Опубликуйте первым!" : "Лента бос. Бірінші жариялаңыз!")) : (function() {
+    var q = feedSearch.trim().toLowerCase();
+    var filteredItems = q ? items.filter(function(item) {
+      return (item.user_name || "").toLowerCase().includes(q) || (item.caption || "").toLowerCase().includes(q) || (item.text || "").toLowerCase().includes(q);
+    }) : items;
+    return /*#__PURE__*/React.createElement(React.Fragment, null,
+    /*#__PURE__*/React.createElement("input", {
+      className: "search-input",
+      style: { margin: "10px 16px 0", width: "calc(100% - 32px)" },
+      placeholder: lang === "ru" ? "Поиск по автору..." : "Автор бойынша іздеу...",
+      value: feedSearch,
+      onChange: function(e) { return setFeedSearch(e.target.value); }
+    }),
+    (filteredItems.length > 0 || feedSearch) && /*#__PURE__*/React.createElement("div", { className: "results-bar" },
+      /*#__PURE__*/React.createElement("span", { className: "results-count" },
+        lang === "ru" ? ("Найдено: " + filteredItems.length + " публ.") : (filteredItems.length + " жариялау")
+      ),
+      feedSearch && /*#__PURE__*/React.createElement("span", {
+        className: "active-filter-tag",
+        onClick: function() { return setFeedSearch(""); }
+      }, "\uD83D\uDD0D ", feedSearch, " \u00D7"),
+      /*#__PURE__*/React.createElement("span", { className: "search-hint" }, lang === "ru" ? "\uD83D\uDD0D по автору" : "\uD83D\uDD0D автор бойынша")
+    ),
+    filteredItems.length === 0 && feedSearch ? /*#__PURE__*/React.createElement("div", { className: "empty" },
+      /*#__PURE__*/React.createElement("div", { className: "empty-icon" }, "\uD83D\uDD0D"),
+      /*#__PURE__*/React.createElement("div", { className: "empty-title" }, lang === "ru" ? "Ничего не найдено" : "Ештеңе табылмады"),
+      /*#__PURE__*/React.createElement("div", { className: "empty-text" }, lang === "ru" ? "Попробуйте другой запрос" : "Басқа сұраныс енгізіп көріңіз"),
+      /*#__PURE__*/React.createElement("div", { className: "empty-hint" },
+        /*#__PURE__*/React.createElement("button", { className: "empty-hint-chip", onClick: function() { return setFeedSearch(""); } }, lang === "ru" ? "× Очистить поиск" : "× Іздеуді тазалау")
+      )
+    ) : /*#__PURE__*/React.createElement("div", {
     className: "feed-list"
-  }, items.map(function (item, i) {
+    }, filteredItems.map(function (item, i) {
     var isOwn = item.device_id === did || item.user_phone === feedUser.phone;
     var daysUntilDelete = item.expires_at ? Math.ceil((new Date(item.expires_at) - new Date()) / 86400000) : null;
     return /*#__PURE__*/React.createElement("div", {
@@ -7291,7 +7325,9 @@ function FeedMain(_ref43) {
     }, "\uD83D\uDDD1")), /*#__PURE__*/React.createElement("div", {
       className: "feed-time"
     }, timeAgo(item.created_at, lang)));
-  })), reportItem && /*#__PURE__*/React.createElement(ReportModal, {
+  }))
+  );
+  })(), reportItem && /*#__PURE__*/React.createElement(ReportModal, {
     t: t,
     lang: lang,
     id: reportItem.id,
