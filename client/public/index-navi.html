@@ -579,14 +579,18 @@ function getPrices() {
       ads_week: 500,
       ads_month: 1500,
       biz_month: 3000,
-      biz_year: 36000
+      biz_year: 36000,
+      feed_month: 5000,
+      feed_year: 60000
     }, JSON.parse(localStorage.getItem("navi_prices") || "{}"));
   } catch (_unused) {
     return {
       ads_week: 500,
       ads_month: 1500,
       biz_month: 3000,
-      biz_year: 36000
+      biz_year: 36000,
+      feed_month: 5000,
+      feed_year: 60000
     };
   }
 }
@@ -1545,14 +1549,14 @@ function AdsTab(_ref6) {
         id: Math.random().toString(36).slice(2),
         device_id: did,
         status: "active",
-        expires_at: new Date(Date.now() + 30 * 864e5).toISOString(),
+        expires_at: new Date(Date.now() + 14 * 864e5).toISOString(),
         created_at: new Date().toISOString()
       })].concat(_toConsumableArray(p));
       localStorage.setItem("navi_ads", JSON.stringify(n));
       return n;
     });
     setShowCreate(false);
-    showToast(lang === "ru" ? "✅ Объявление опубликовано! 7 дней бесплатно." : "✅ Хабарландыру жарияланды! 7 күн тегін.");
+    showToast(lang === "ru" ? "✅ Объявление опубликовано! 14 дней бесплатно." : "✅ Хабарландыру жарияланды! 14 күн тегін.");
   }
   function handleSaveEdit(updated) {
     setAds(function (p) {
@@ -2758,7 +2762,7 @@ function BizTab(_ref14) {
             id: newId,
             phone: bizUser.phone.replace(/[^\d]/g, ''),
             is_active: true,
-            subscription_expires_at: new Date(Date.now() + 90 * 864e5).toISOString(),
+            subscription_expires_at: new Date(Date.now() + 30 * 864e5).toISOString(),
             rating: 5.0
           }, data);
           setBizs(function (p) {
@@ -6534,6 +6538,61 @@ function AddProd(_ref40) {
 }
 
 // ── FEED AUTH & TAB ───────────────────────────────────────────────────────
+function getFeedSub() {
+  try { return JSON.parse(localStorage.getItem("navi_feed_sub") || "null"); } catch(_) { return null; }
+}
+function saveFeedSub(sub) {
+  localStorage.setItem("navi_feed_sub", JSON.stringify(sub));
+}
+function getFeedSubOk() {
+  var sub = getFeedSub();
+  if (!sub) return false;
+  return new Date(sub.expires_at) > new Date();
+}
+function getFeedTrialOk() {
+  // Trial: 7 days from first registration
+  var reg = localStorage.getItem("navi_feed_reg_at");
+  if (!reg) return true; // not registered yet, will be set on login
+  return (Date.now() - Number(reg)) < 7 * 864e5;
+}
+function FeedPaywall(_ref_fp) {
+  var lang = _ref_fp.lang, t = _ref_fp.t, feedUser = _ref_fp.feedUser, onLogout = _ref_fp.onLogout, showToast = _ref_fp.showToast;
+  var ru = lang === "ru";
+  var prices = getPrices();
+  var _useState_fp1 = useState(false), _useState_fp2 = _slicedToArray(_useState_fp1, 2), showPay = _useState_fp2[0], setShowPay = _useState_fp2[1];
+  var pendingPay = getPaymentRequests().find(function(r) { return r.entity_type === "feed" && r.entity_id === feedUser.phone && r.status === "pending"; });
+  return /*#__PURE__*/React.createElement("div", { className: "scroll-area" },
+    /*#__PURE__*/React.createElement("div", { className: "auth-screen" },
+      /*#__PURE__*/React.createElement("div", { className: "auth-icon" }, "📸"),
+      /*#__PURE__*/React.createElement("div", { className: "auth-title" }, ru ? "Лента" : "Лента"),
+      /*#__PURE__*/React.createElement("div", { className: "auth-sub" }, ru ? "Пробный период истёк. Оформите подписку для доступа к ленте." : "Сынақ мерзімі аяқталды. Лентаға кіру үшін жазылым рәсімдеңіз."),
+      pendingPay
+        ? /*#__PURE__*/React.createElement("div", { style: { background: "rgba(244,160,32,0.1)", border: "1.5px solid #f4a020", borderRadius: 10, padding: "12px 16px", fontSize: 13, color: "#b07800", fontWeight: 600, textAlign: "center" } },
+            ru ? "⏳ Заявка на оплату отправлена. Ожидайте активации." : "⏳ Төлем өтінімі жіберілді. Белсендіруді күтіңіз.")
+        : /*#__PURE__*/React.createElement(React.Fragment, null,
+            /*#__PURE__*/React.createElement("div", { style: { display: "flex", gap: 10, width: "100%", maxWidth: 320 } },
+              [{ key: "month", label: ru ? "Месяц" : "Ай", amount: prices.feed_month }, { key: "year", label: ru ? "Год" : "Жыл", amount: prices.feed_year }].map(function(p) {
+                return /*#__PURE__*/React.createElement("div", { key: p.key, style: { flex: 1, border: "1.5px solid var(--border)", borderRadius: 12, padding: "14px 10px", textAlign: "center", background: "var(--bg2)" } },
+                  /*#__PURE__*/React.createElement("div", { style: { fontSize: 12, color: "var(--text3)", fontWeight: 700, marginBottom: 4 } }, p.label),
+                  /*#__PURE__*/React.createElement("div", { style: { fontSize: 18, fontWeight: 800, color: "var(--text)" } }, p.amount.toLocaleString(), " ₸")
+                );
+              })
+            ),
+            /*#__PURE__*/React.createElement("button", { className: "btn btn-primary", style: { width: "100%", maxWidth: 320, justifyContent: "center" }, onClick: function() { setShowPay(true); } }, "💳 ", ru ? "Оплатить подписку" : "Жазылымды төлеу")
+          ),
+      /*#__PURE__*/React.createElement("button", { className: "btn btn-outline btn-sm", onClick: onLogout }, "🚪 ", ru ? "Выйти" : "Шығу"),
+      showPay && /*#__PURE__*/React.createElement(PaymentRequestModal, {
+        lang: lang, t: t,
+        entityType: "feed",
+        entityId: feedUser.phone,
+        entityLabel: ru ? "Лента · " + feedUser.name : "Лента · " + feedUser.name,
+        plans: [{ key: "month", label: ru ? "Месяц" : "Ай", amount: prices.feed_month }, { key: "year", label: ru ? "Год" : "Жыл", amount: prices.feed_year }],
+        onClose: function() { setShowPay(false); },
+        onSent: function() { showToast(ru ? "✅ Заявка отправлена" : "✅ Өтінім жіберілді"); }
+      })
+    )
+  );
+}
 function FeedTab(_ref41) {
   var t = _ref41.t,
     lang = _ref41.lang,
@@ -6551,6 +6610,10 @@ function FeedTab(_ref41) {
     setFeedUser = _useState154[1];
   function handleLogin(user) {
     localStorage.setItem("navi_feed_user", JSON.stringify(user));
+    // Set registration date on first login
+    if (!localStorage.getItem("navi_feed_reg_at_" + user.phone)) {
+      localStorage.setItem("navi_feed_reg_at_" + user.phone, String(Date.now()));
+    }
     setFeedUser(user);
   }
   function handleLogout() {
@@ -6561,6 +6624,14 @@ function FeedTab(_ref41) {
   if (!feedUser) return /*#__PURE__*/React.createElement(FeedAuth, {
     lang: lang,
     onLogin: handleLogin
+  });
+  // Check subscription: trial (7 days from reg) OR active paid sub
+  var regAt = Number(localStorage.getItem("navi_feed_reg_at_" + feedUser.phone) || "0");
+  var trialOk = regAt > 0 && (Date.now() - regAt) < 7 * 864e5;
+  var subOk = getFeedSubOk();
+  var hasAccess = trialOk || subOk;
+  if (!hasAccess) return /*#__PURE__*/React.createElement(FeedPaywall, {
+    lang: lang, t: t, feedUser: feedUser, onLogout: handleLogout, showToast: showToast
   });
   return /*#__PURE__*/React.createElement(FeedMain, {
     t: t,
@@ -6971,10 +7042,23 @@ function FeedMain(_ref43) {
               break;
             }
             _context1.n = 3;
-            return new Promise(function (res) {
+            return new Promise(function (res, rej) {
               var r = new FileReader();
               r.onload = function (ev) {
-                return res(ev.target.result);
+                // Check video duration before uploading
+                var dataUrl = ev.target.result;
+                var tmpVideo = document.createElement("video");
+                tmpVideo.preload = "metadata";
+                tmpVideo.onloadedmetadata = function () {
+                  URL.revokeObjectURL(tmpVideo.src);
+                  if (tmpVideo.duration > 300) { // 5 minutes = 300 seconds
+                    rej(new Error("VIDEO_TOO_LONG"));
+                  } else {
+                    res(dataUrl);
+                  }
+                };
+                tmpVideo.onerror = function () { res(dataUrl); }; // fallback if metadata fails
+                tmpVideo.src = URL.createObjectURL(file);
               };
               r.readAsDataURL(file);
             });
@@ -7016,7 +7100,9 @@ function FeedMain(_ref43) {
           case 7:
             _context1.p = 7;
             _t4 = _context1.v;
-            showToast(lang === "ru" ? "Ошибка загрузки" : "Жүктеу қатесі");
+            showToast(_t4 && _t4.message === "VIDEO_TOO_LONG"
+              ? (lang === "ru" ? "⚠️ Видео не должно превышать 5 минут" : "⚠️ Бейне 5 минуттан аспауы керек")
+              : (lang === "ru" ? "Ошибка загрузки" : "Жүктеу қатесі"));
           case 8:
             _context1.p = 8;
             setUploading(false);
@@ -7810,6 +7896,10 @@ function AdminPanel(_ref49) {
         localStorage.setItem("navi_bizs", JSON.stringify(n));
         return n;
       });
+    } else if (req.entity_type === "feed") {
+      var _feedDays = req.plan === "year" ? 365 : 30;
+      var _feedSub = { expires_at: new Date(now.getTime() + _feedDays * 864e5).toISOString(), phone: req.entity_id };
+      localStorage.setItem("navi_feed_sub", JSON.stringify(_feedSub));
     }
     setPayRequests(function (p) {
       var n = p.map(function (r) {
@@ -8429,7 +8519,7 @@ function AdminPanel(_ref49) {
           setAds(function (p) {
             var n = p.map(function (x) {
               return x.id === a.id ? _objectSpread(_objectSpread({}, x), {}, {
-                expires_at: new Date(Date.now() + 30 * 864e5).toISOString(),
+                expires_at: new Date(Date.now() + 14 * 864e5).toISOString(),
                 status: "active"
               }) : x;
             });
@@ -8532,7 +8622,7 @@ function AdminPanel(_ref49) {
           setBizs(function (p) {
             var n = p.map(function (x) {
               return x.id === b.id ? _objectSpread(_objectSpread({}, x), {}, {
-                subscription_expires_at: new Date(Date.now() + 90 * 864e5).toISOString(),
+                subscription_expires_at: new Date(Date.now() + 30 * 864e5).toISOString(),
                 is_active: true
               }) : x;
             });
@@ -8639,7 +8729,7 @@ function AdminPanel(_ref49) {
   }).map(function (r) {
     var statusColor = r.status === "pending" ? "#f4a020" : r.status === "approved" ? "var(--green)" : "var(--red)";
     var statusLabel = r.status === "pending" ? t.pay_status_pending : r.status === "approved" ? t.pay_status_approved : t.pay_status_rejected;
-    var typeLabel = r.entity_type === "ad" ? lang === "ru" ? "Объявление" : "Хабарландыру" : "".concat(lang === "ru" ? "Бизнес" : "Бизнес").concat(r.biz_subtype ? " \xB7 ".concat(r.biz_subtype === "sales" ? t.pay_biz_sales : t.pay_biz_services) : "");
+    var typeLabel = r.entity_type === "ad" ? lang === "ru" ? "Объявление" : "Хабарландыру" : r.entity_type === "feed" ? lang === "ru" ? "Лента" : "Лента" : "".concat(lang === "ru" ? "Бизнес" : "Бизнес").concat(r.biz_subtype ? " \xB7 ".concat(r.biz_subtype === "sales" ? t.pay_biz_sales : t.pay_biz_services) : "");
     return /*#__PURE__*/React.createElement("div", {
       key: r.id,
       className: "admin-row",
