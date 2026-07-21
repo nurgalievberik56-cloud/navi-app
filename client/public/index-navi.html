@@ -7874,28 +7874,36 @@ function AdminPanel(_ref49) {
     var now = new Date();
     if (req.entity_type === "ad") {
       var days = req.plan === "week" ? 7 : 30;
+      var adExpiresAt = new Date(now.getTime() + days * 864e5);
       setAds(function (p) {
         var n = p.map(function (a) {
           return a.id === req.entity_id ? _objectSpread(_objectSpread({}, a), {}, {
             status: "active",
-            expires_at: new Date(now.getTime() + days * 864e5).toISOString()
+            expires_at: adExpiresAt.toISOString()
           }) : a;
         });
         localStorage.setItem("navi_ads", JSON.stringify(n));
         return n;
       });
+      if (window.NaviAPI && req.entity_id) {
+        window.NaviAPI.updateAdSubscription(req.entity_id, adExpiresAt).catch(function(e) { console.warn("[AdminTab] ad sub sync failed:", e); });
+      }
     } else if (req.entity_type === "biz") {
       var _days = req.plan === "year" ? 365 : 30;
+      var bizExpiresAt = new Date(now.getTime() + _days * 864e5);
       setBizs(function (p) {
         var n = p.map(function (b) {
           return b.id === req.entity_id ? _objectSpread(_objectSpread({}, b), {}, {
             is_active: true,
-            subscription_expires_at: new Date(now.getTime() + _days * 864e5).toISOString()
+            subscription_expires_at: bizExpiresAt.toISOString()
           }) : b;
         });
         localStorage.setItem("navi_bizs", JSON.stringify(n));
         return n;
       });
+      if (window.NaviAPI && req.entity_id) {
+        window.NaviAPI.updateBizSubscription(req.entity_id, bizExpiresAt).catch(function(e) { console.warn("[AdminTab] biz sub sync failed:", e); });
+      }
     } else if (req.entity_type === "feed") {
       var _feedDays = req.plan === "year" ? 365 : 30;
       var _feedSub = { expires_at: new Date(now.getTime() + _feedDays * 864e5).toISOString(), phone: req.entity_id };

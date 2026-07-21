@@ -40,6 +40,10 @@ export const appRouter = router({
     delete: publicProcedure
       .input(z.object({ id: z.number(), deviceId: z.string() }))
       .mutation(({ input }) => db.deleteAd(input.id, input.deviceId)),
+
+    updateSubscription: publicProcedure
+      .input(z.object({ id: z.number(), expiresAt: z.date() }))
+      .mutation(({ input }) => db.updateAdSubscription(input.id, input.expiresAt)),
   }),
 
   // ─── Businesses ────────────────────────────────────────────────────────────
@@ -89,6 +93,10 @@ export const appRouter = router({
         const { id, deviceId, ...data } = input;
         return db.updateBusiness(id, deviceId, data);
       }),
+
+    updateSubscription: publicProcedure
+      .input(z.object({ id: z.number(), expiresAt: z.date() }))
+      .mutation(({ input }) => db.updateBusinessSubscription(input.id, input.expiresAt)),
 
     listProducts: publicProcedure
       .input(z.object({ businessId: z.number() }))

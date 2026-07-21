@@ -39,6 +39,7 @@ export const ads = mysqlTable("ads", {
   photoUrl: text("photoUrl"),
   expiresAt: timestamp("expiresAt"),
   isActive: boolean("isActive").default(true).notNull(),
+  subscriptionExpiresAt: timestamp("subscriptionExpiresAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
@@ -62,6 +63,7 @@ export const businesses = mysqlTable("businesses", {
   rating: decimal("rating", { precision: 3, scale: 2 }).default("0.00"),
   reviewCount: int("reviewCount").default(0).notNull(),
   isActive: boolean("isActive").default(true).notNull(),
+  subscriptionExpiresAt: timestamp("subscriptionExpiresAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

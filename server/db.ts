@@ -1,4 +1,5 @@
 import { and, desc, eq, sql } from "drizzle-orm";
+import { gt, or, isNull } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import {
   InsertUser,
@@ -65,7 +66,14 @@ export async function getUserByOpenId(openId: string) {
 export async function listAds(category?: string, search?: string) {
   const db = await getDb();
   if (!db) return [];
-  let result = await db.select().from(ads).where(eq(ads.isActive, true)).orderBy(desc(ads.createdAt)).limit(100);
+  const now = new Date();
+  // Only show ads that are active AND subscription has not expired (or subscriptionExpiresAt is null = never set)
+  let result = await db.select().from(ads)
+    .where(and(
+      eq(ads.isActive, true),
+      or(isNull(ads.subscriptionExpiresAt), gt(ads.subscriptionExpiresAt, now))
+    ))
+    .orderBy(desc(ads.createdAt)).limit(100);
   if (category && category !== "all") result = result.filter(a => a.category === category);
   if (search) {
     const s = search.toLowerCase();
@@ -87,11 +95,32 @@ export async function deleteAd(id: number, deviceId: string) {
   await db.update(ads).set({ isActive: false }).where(and(eq(ads.id, id), eq(ads.deviceId, deviceId)));
 }
 
+export async function updateAdSubscription(id: number, expiresAt: Date) {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  await db.update(ads).set({ subscriptionExpiresAt: expiresAt, isActive: true }).where(eq(ads.id, id));
+}
+
+export async function getExpiredAds() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(ads)
+    .where(and(eq(ads.isActive, true), sql`${ads.subscriptionExpiresAt} IS NOT NULL AND ${ads.subscriptionExpiresAt} < NOW()`))
+    .orderBy(desc(ads.createdAt)).limit(200);
+}
+
 // ─── Businesses ───────────────────────────────────────────────────────────────
 export async function listBusinesses(category?: string, search?: string) {
   const db = await getDb();
   if (!db) return [];
-  let result = await db.select().from(businesses).where(eq(businesses.isActive, true)).orderBy(desc(businesses.createdAt)).limit(100);
+  const now = new Date();
+  // Only show businesses that are active AND subscription has not expired (or subscriptionExpiresAt is null = never set)
+  let result = await db.select().from(businesses)
+    .where(and(
+      eq(businesses.isActive, true),
+      or(isNull(businesses.subscriptionExpiresAt), gt(businesses.subscriptionExpiresAt, now))
+    ))
+    .orderBy(desc(businesses.createdAt)).limit(100);
   if (category && category !== "all") result = result.filter(b => b.category === category);
   if (search) {
     const s = search.toLowerCase();
@@ -125,6 +154,20 @@ export async function updateBusiness(id: number, deviceId: string, data: Partial
   const db = await getDb();
   if (!db) throw new Error("DB not available");
   await db.update(businesses).set(data).where(and(eq(businesses.id, id), eq(businesses.deviceId, deviceId)));
+}
+
+export async function updateBusinessSubscription(id: number, expiresAt: Date) {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  await db.update(businesses).set({ subscriptionExpiresAt: expiresAt, isActive: true }).where(eq(businesses.id, id));
+}
+
+export async function getExpiredBusinesses() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(businesses)
+    .where(and(eq(businesses.isActive, true), sql`${businesses.subscriptionExpiresAt} IS NOT NULL AND ${businesses.subscriptionExpiresAt} < NOW()`))
+    .orderBy(desc(businesses.createdAt)).limit(200);
 }
 
 // ─── Products ─────────────────────────────────────────────────────────────────

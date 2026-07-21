@@ -478,6 +478,15 @@
     return prData;
   }
 
+  // ─── Subscription API ───────────────────────────────────────────────────────
+  async function updateAdSubscription(id, expiresAt) {
+    return trpc("ads.updateSubscription", { id: parseInt(id), expiresAt: new Date(expiresAt) }, "mutation");
+  }
+
+  async function updateBizSubscription(id, expiresAt) {
+    return trpc("businesses.updateSubscription", { id: parseInt(id), expiresAt: new Date(expiresAt) }, "mutation");
+  }
+
   // ─── Reports API ────────────────────────────────────────────────────────────
   async function createReport(reportData) {
     const did = getDeviceId();
@@ -566,6 +575,10 @@
     // Payments
     getPaymentRequests: getPaymentRequests,
     createPaymentRequest: createPaymentRequest,
+
+    // Subscriptions
+    updateAdSubscription: updateAdSubscription,
+    updateBizSubscription: updateBizSubscription,
 
     // Reports
     createReport: createReport,

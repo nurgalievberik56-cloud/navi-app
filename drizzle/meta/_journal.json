@@ -15,6 +15,13 @@
       "when": 1784395978333,
       "tag": "0001_regular_killer_shrike",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1784600948867,
+      "tag": "0002_confused_roland_deschain",
+      "breakpoints": true
     }
   ]
 }
