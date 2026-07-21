@@ -7384,10 +7384,7 @@ function FeedMain(_ref43) {
       style: {
         flex: 1
       }
-    }), !isOwn && /*#__PURE__*/React.createElement("button", {
-      onClick: function onClick() {
-        return setReportItem(item);
-    }, /*#__PURE__*/React.createElement("button", {
+    }), /*#__PURE__*/React.createElement("button", {
       className: "feed-fav-btn",
       title: favFeeds.includes(item.id) ? (lang === "ru" ? "Убрать из избранного" : "Таңдаулыдан алып тастау") : (lang === "ru" ? "В избранное" : "Таңдаулыға қосу"),
       onClick: function(e) { e.stopPropagation(); toggleFavFeed(item.id); }
