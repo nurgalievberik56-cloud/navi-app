@@ -40,6 +40,10 @@ async function startServer() {
   registerOAuthRoutes(app);
   registerNaviStoreRoutes(app);
   registerFeedUploadRoute(app);
+  // Redirect root to the main Navi app (instant, no JS required)
+  app.get("/", (_req, res) => {
+    res.redirect(302, "/index-navi.html");
+  });
   // tRPC API
   app.use(
     "/api/trpc",
