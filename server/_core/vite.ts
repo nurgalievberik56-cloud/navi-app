@@ -50,7 +50,7 @@ export async function setupVite(app: Express, server: Server) {
 export function serveStatic(app: Express) {
   const distPath =
     process.env.NODE_ENV === "development"
-      ? path.resolve(import.meta.dirname, "../..", "dist", "public")
+      ? path.resolve(import.meta.dirname, "../\..", "dist", "public")
       : path.resolve(import.meta.dirname, "public");
   if (!fs.existsSync(distPath)) {
     console.error(
@@ -60,7 +60,12 @@ export function serveStatic(app: Express) {
 
   app.use(express.static(distPath));
 
-  // fall through to index.html if the file doesn't exist
+  // Serve index-navi.html explicitly (main Navi app)
+  app.get("/index-navi.html", (_req, res) => {
+    res.sendFile(path.resolve(distPath, "index-navi.html"));
+  });
+
+  // fall through to index.html (React SPA) if the file doesn't exist
   app.use("*", (_req, res) => {
     res.sendFile(path.resolve(distPath, "index.html"));
   });
