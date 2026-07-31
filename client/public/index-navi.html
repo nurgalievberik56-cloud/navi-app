@@ -1509,7 +1509,7 @@ function AdsTab(_ref6) {
     _useState42 = _slicedToArray(_useState41, 2),
     extendItem = _useState42[0],
     setExtendItem = _useState42[1];
-  var cats = ["all", "sell", "buy", "services", "free"];
+  var cats = ["all", "sell", "buy", "services", "free"]; // Все четыре категории объявлений
   var catLabel = {
     all: t.all,
     sell: t.sell,
@@ -5274,7 +5274,8 @@ function BizAuth(_ref35) {
     return _goNext.apply(this, arguments);
   }
   function changePin(refs, arr, setArr, i, val) {
-    if (!/^[0-9]*$/.test(val)) return;
+    // Разрешаем буквы (A-Z, a-z) и цифры (0-9) для пароля
+    if (!/^[a-zA-Z0-9]*$/.test(val)) return;
     var n = _toConsumableArray(arr);
     n[i] = val.slice(-1);
     setArr(n);
@@ -5425,8 +5426,8 @@ function BizAuth(_ref35) {
         key: i,
         ref: refs[i],
         className: "code-digit",
-        type: "password",
-        inputMode: "numeric",
+        type: "text",
+        inputMode: "text",
         value: c,
         maxLength: 1,
         onChange: function onChange(e) {
@@ -7116,9 +7117,17 @@ function FeedMain(_ref43) {
       }).catch(function() {});
     }
   }, []);
+  // Примечание: FeedMain отображается только если feedUser авторизован
+  // Кнопка Назад должна вернуть пользователя в главное меню (выход из ленты)
+  // Это достигается через onLogout() в родительском компоненте
   return /*#__PURE__*/React.createElement("div", {
     className: "scroll-area"
-  }, /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("button", {
+    className: "back-btn",
+    onClick: function onClick() {
+      return onLogout(); // Возврат в главное меню (выход из режима ленты)
+    }
+  }, "← " + (lang === "ru" ? "Назад" : "Артқа")), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       alignItems: "center",
