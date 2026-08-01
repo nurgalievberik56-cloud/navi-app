@@ -1,5 +1,4 @@
-import { and, desc, eq, sql } from "drizzle-orm";
-import { gt, or, isNull } from "drizzle-orm";
+import { and, desc, eq, sql, gt, or, isNull, gte, lte } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import {
   InsertUser,
@@ -16,6 +15,9 @@ import {
   reports,
   reviews,
   users,
+  adViews,
+  completedOrders,
+  businessAnalytics,
 } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
@@ -382,4 +384,125 @@ export async function nextSeq(): Promise<number> {
   });
   const [row] = await db.select().from(appSettings).where(eq(appSettings.key, "seq_counter")).limit(1);
   return Number(row?.value || 1);
+}
+
+// ─── Analytics (Аналитика) ────────────────────────────────────────────────────
+export async function recordAdView(adId: number, deviceId: string): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  
+  await db.insert(adViews).values({
+    adId,
+    deviceId,
+  });
+}
+
+export async function recordCompletedOrder(orderId: number, businessId: number, amount: string): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  
+  const amountDecimal = parseFloat(amount) || 0;
+  
+  await db.insert(completedOrders).values({
+    orderId,
+    businessId,
+    amount: amountDecimal.toString(),
+  });
+  
+  // Обновляем аналитику
+  const today = new Date().toISOString().split('T')[0];
+  const existing = await db
+    .select()
+    .from(businessAnalytics)
+    .where(and(
+      eq(businessAnalytics.businessId, businessId),
+      eq(businessAnalytics.date, today)
+    ))
+    .limit(1);
+  
+  if (existing.length > 0) {
+    await db
+      .update(businessAnalytics)
+      .set({
+        ordersCount: existing[0].ordersCount + 1,
+        totalAmount: (parseFloat(existing[0].totalAmount.toString()) + amountDecimal).toString(),
+      })
+      .where(eq(businessAnalytics.id, existing[0].id));
+  } else {
+    await db.insert(businessAnalytics).values({
+      businessId,
+      date: today,
+      viewsCount: 0,
+      ordersCount: 1,
+      totalAmount: amountDecimal.toString(),
+    });
+  }
+}
+
+export async function getBusinessAnalytics(businessId: number, period: 'day' | 'week' | 'month') {
+  const db = await getDb();
+  if (!db) return { views: 0, orders: 0, amount: '0' };
+  
+  const now = new Date();
+  let startDate = new Date();
+  
+  if (period === 'day') {
+    startDate.setDate(now.getDate() - 1);
+  } else if (period === 'week') {
+    startDate.setDate(now.getDate() - 7);
+  } else if (period === 'month') {
+    startDate.setMonth(now.getMonth() - 1);
+  }
+  
+  const startDateStr = startDate.toISOString().split('T')[0];
+  const endDateStr = now.toISOString().split('T')[0];
+  
+  const analytics = await db
+    .select()
+    .from(businessAnalytics)
+    .where(and(
+      eq(businessAnalytics.businessId, businessId),
+      gte(businessAnalytics.date, startDateStr),
+      lte(businessAnalytics.date, endDateStr)
+    ));
+  
+  const totalViews = analytics.reduce((sum, a) => sum + a.viewsCount, 0);
+  const totalOrders = analytics.reduce((sum, a) => sum + a.ordersCount, 0);
+  const totalAmount = analytics.reduce((sum, a) => sum + parseFloat(a.totalAmount.toString()), 0);
+  
+  return {
+    views: totalViews,
+    orders: totalOrders,
+    amount: totalAmount.toFixed(2),
+  };
+}
+
+export async function getBusinessAnalyticsDetailed(businessId: number) {
+  const db = await getDb();
+  if (!db) return { today: {}, week: {}, month: {}, allTime: {} };
+  
+  const today = await getBusinessAnalytics(businessId, 'day');
+  const week = await getBusinessAnalytics(businessId, 'week');
+  const month = await getBusinessAnalytics(businessId, 'month');
+  
+  // All time
+  const allAnalytics = await db
+    .select()
+    .from(businessAnalytics)
+    .where(eq(businessAnalytics.businessId, businessId));
+  
+  const allTimeViews = allAnalytics.reduce((sum, a) => sum + a.viewsCount, 0);
+  const allTimeOrders = allAnalytics.reduce((sum, a) => sum + a.ordersCount, 0);
+  const allTimeAmount = allAnalytics.reduce((sum, a) => sum + parseFloat(a.totalAmount.toString()), 0);
+  
+  return {
+    today,
+    week,
+    month,
+    allTime: {
+      views: allTimeViews,
+      orders: allTimeOrders,
+      amount: allTimeAmount.toFixed(2),
+    },
+  } as const;
 }

@@ -302,6 +302,21 @@ export const appRouter = router({
       .input(z.object({ key: z.string(), value: z.string() }))
       .mutation(({ input }) => db.setAppSetting(input.key, input.value)),
   }),
+
+  // --- Analytics ---
+  analytics: router({
+    recordView: publicProcedure
+      .input(z.object({ adId: z.number(), deviceId: z.string() }))
+      .mutation(({ input }) => db.recordAdView(input.adId, input.deviceId)),
+
+    recordOrder: publicProcedure
+      .input(z.object({ orderId: z.number(), businessId: z.number(), amount: z.string() }))
+      .mutation(({ input }) => db.recordCompletedOrder(input.orderId, input.businessId, input.amount)),
+
+    getBusinessAnalytics: publicProcedure
+      .input(z.object({ businessId: z.number() }))
+      .query(({ input }) => db.getBusinessAnalyticsDetailed(input.businessId)),
+  }),
 });
 
 export type AppRouter = typeof appRouter;

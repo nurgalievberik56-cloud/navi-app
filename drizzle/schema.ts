@@ -213,6 +213,41 @@ export const appSettings = mysqlTable("app_settings", {
 });
 export type AppSetting = typeof appSettings.$inferSelect;
 
+// ─── Ad Views (Просмотры объявлений) ─────────────────────────────────────────
+export const adViews = mysqlTable("ad_views", {
+  id: int("id").autoincrement().primaryKey(),
+  adId: int("adId").notNull(),
+  deviceId: varchar("deviceId", { length: 64 }).notNull(),
+  viewedAt: timestamp("viewedAt").defaultNow().notNull(),
+});
+export type AdView = typeof adViews.$inferSelect;
+export type InsertAdView = typeof adViews.$inferInsert;
+
+// ─── Completed Orders (Выполненные заказы) ───────────────────────────────────
+export const completedOrders = mysqlTable("completed_orders", {
+  id: int("id").autoincrement().primaryKey(),
+  orderId: int("orderId").notNull(),
+  businessId: int("businessId").notNull(),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  completedAt: timestamp("completedAt").defaultNow().notNull(),
+});
+export type CompletedOrder = typeof completedOrders.$inferSelect;
+export type InsertCompletedOrder = typeof completedOrders.$inferInsert;
+
+// ─── Business Analytics (Аналитика бизнеса) ──────────────────────────────────
+export const businessAnalytics = mysqlTable("business_analytics", {
+  id: int("id").autoincrement().primaryKey(),
+  businessId: int("businessId").notNull(),
+  date: varchar("date", { length: 10 }).notNull(), // YYYY-MM-DD
+  viewsCount: int("viewsCount").default(0).notNull(),
+  ordersCount: int("ordersCount").default(0).notNull(),
+  totalAmount: decimal("totalAmount", { precision: 10, scale: 2 }).default("0.00").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type BusinessAnalytic = typeof businessAnalytics.$inferSelect;
+export type InsertBusinessAnalytic = typeof businessAnalytics.$inferInsert;
+
 // ─── Navi Store (синхронизация localStorage с БД) ─────────────────────────────
 export const naviStore = mysqlTable("navi_store", {
   id: int("id").autoincrement().primaryKey(),

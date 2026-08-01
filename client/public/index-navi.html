@@ -666,6 +666,13 @@ function updateOrderStatus(orderId, status) {
     }) : o;
   });
   localStorage.setItem("navi_orders", JSON.stringify(updated));
+  if (status === "done") {
+    var order = updated.find(function(o) { return o.id === orderId; });
+    if (order && window.NaviAnalytics) {
+      var amount = (order.total || "0").toString();
+      window.NaviAnalytics.recordOrder(order.id, order.business_id, amount);
+    }
+  }
   return updated;
 }
 
@@ -1961,7 +1968,13 @@ function AdCard(_ref7) {
   }, /*#__PURE__*/React.createElement("a", {
     className: "btn btn-green btn-sm",
     href: "https://wa.me/".concat(waPhone(a.whatsapp)),
-    target: "_blank"
+    target: "_blank",
+    onClick: function() {
+      if (window.NaviAnalytics) {
+        var did = localStorage.getItem('navi_device_id') || 'unknown';
+        window.NaviAnalytics.recordAdView(a.id, did);
+      }
+    }
   }, "\uD83D\uDCAC ", t.write_wa), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-outline btn-sm",
     onClick: onReport,
@@ -4080,8 +4093,87 @@ function BookingsPanel(_ref26) {
       borderRadius: "var(--radius-sm)",
       display: "block"
     }
-  }))));
+  })));
 }
+
+function AnalyticsPanel(_ref_analytics) {
+  var lang = _ref_analytics.lang,
+    bizId = _ref_analytics.bizId,
+    onClose = _ref_analytics.onClose;
+  var ru = lang === "ru";
+  var _useState_analytics_data = useState(null),
+    _useState_analytics_data2 = _slicedToArray(_useState_analytics_data, 2),
+    analyticsData = _useState_analytics_data2[0],
+    setAnalyticsData = _useState_analytics_data2[1];
+  var _useState_analytics_period = useState("day"),
+    _useState_analytics_period2 = _slicedToArray(_useState_analytics_period, 2),
+    period = _useState_analytics_period2[0],
+    setPeriod = _useState_analytics_period2[1];
+  useEffect(function() {
+    if (window.NaviAnalytics) {
+      window.NaviAnalytics.getBusinessAnalytics(bizId).then(function(data) {
+        if (data && data.result) {
+          setAnalyticsData(data.result);
+        }
+      }).catch(function(e) {
+        console.warn("[AnalyticsPanel] failed to load:", e);
+      });
+    }
+  }, [bizId]);
+  if (!analyticsData) {
+    return /*#__PURE__*/React.createElement("div", {
+      className: "overlay",
+      onClick: onClose
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "modal",
+      onClick: function(e) { return e.stopPropagation(); }
+    }, /*#__PURE__*/React.createElement("div", { style: { textAlign: "center", padding: "20px" } }, ru ? "Загрузка..." : "Жүктеу...")));
+  }
+  var periodData = analyticsData[period] || {};
+  return /*#__PURE__*/React.createElement("div", {
+    className: "overlay",
+    onClick: onClose
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "modal",
+    onClick: function(e) { return e.stopPropagation(); }
+  }, /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-outline btn-sm",
+    onClick: onClose,
+    style: { marginBottom: 8, width: "100%", justifyContent: "center" }
+  }, "\u2190 ", ru ? "Назад" : "Артқа"), /*#__PURE__*/React.createElement("div", {
+    style: { marginBottom: 16 }
+  }, /*#__PURE__*/React.createElement("div", { style: { fontSize: 18, fontWeight: 700, marginBottom: 8 } }, ru ? "📊 Аналитика" : "📊 Аналитика"), /*#__PURE__*/React.createElement("div", {
+    style: { display: "flex", gap: 8, marginBottom: 12 }
+  }, [["day", ru ? "День" : "Күн"], ["week", ru ? "Неделя" : "Апта"], ["month", ru ? "Месяц" : "Ай"]].map(function(item) {
+    var key = item[0], label = item[1];
+    return /*#__PURE__*/React.createElement("button", {
+      key: key,
+      onClick: function() { return setPeriod(key); },
+      style: {
+        flex: 1,
+        padding: "8px 12px",
+        borderRadius: 8,
+        border: "1.5px solid " + (period === key ? "var(--accent)" : "var(--border)"),
+        background: period === key ? "var(--accent)" : "transparent",
+        color: period === key ? "#fff" : "var(--text2)",
+        fontWeight: 600,
+        fontSize: 12,
+        cursor: "pointer"
+      }
+    }, label);
+  })), /*#__PURE__*/React.createElement("div", {
+    style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: { background: "var(--bg2)", padding: 12, borderRadius: 8 }
+  }, /*#__PURE__*/React.createElement("div", { style: { fontSize: 11, color: "var(--text3)", marginBottom: 4 } }, ru ? "Просмотры" : "Көрінісі"), /*#__PURE__*/React.createElement("div", { style: { fontSize: 20, fontWeight: 700 } }, periodData.views || 0)), /*#__PURE__*/React.createElement("div", {
+    style: { background: "var(--bg2)", padding: 12, borderRadius: 8 }
+  }, /*#__PURE__*/React.createElement("div", { style: { fontSize: 11, color: "var(--text3)", marginBottom: 4 } }, ru ? "Заказы" : "Тапсырыстар"), /*#__PURE__*/React.createElement("div", { style: { fontSize: 20, fontWeight: 700 } }, periodData.orders || 0)), /*#__PURE__*/React.createElement("div", {
+    style: { background: "var(--bg2)", padding: 12, borderRadius: 8 }
+  }, /*#__PURE__*/React.createElement("div", { style: { fontSize: 11, color: "var(--text3)", marginBottom: 4 } }, ru ? "Сумма" : "Сома"), /*#__PURE__*/React.createElement("div", { style: { fontSize: 20, fontWeight: 700 } }, (periodData.total || 0).toLocaleString(), " ₸")), /*#__PURE__*/React.createElement("div", {
+    style: { background: "var(--bg2)", padding: 12, borderRadius: 8 }
+  }, /*#__PURE__*/React.createElement("div", { style: { fontSize: 11, color: "var(--text3)", marginBottom: 4 } }, ru ? "Конверсия" : "Конверсия"), /*#__PURE__*/React.createElement("div", { style: { fontSize: 20, fontWeight: 700 } }, periodData.views > 0 ? ((periodData.orders || 0) / periodData.views * 100).toFixed(1) + "%" : "0%")))))));
+}
+
 function BookingModal(_ref27) {
   var b = _ref27.biz,
     svcInit = _ref27.service,
@@ -5605,6 +5697,10 @@ function BizCabinet(_ref37) {
     _useState140 = _slicedToArray(_useState139, 2),
     editingProd = _useState140[0],
     setEditingProd = _useState140[1];
+  var _useState_analytics = useState(false),
+    _useState_analytics2 = _slicedToArray(_useState_analytics, 2),
+    showAnalytics = _useState_analytics2[0],
+    setShowAnalytics = _useState_analytics2[1];
   var phone = bizUser.phone.replace(/[^\d]/g, '');
   var defaultForm = {
     name: "",
@@ -5899,7 +5995,15 @@ function BizCabinet(_ref37) {
     style: {
       justifyContent: "center"
     }
-  }, "\uD83D\uDCC5 ", lang === "ru" ? "Записи" : "Жазылулар", newBookingsCount > 0 ? " (".concat(newBookingsCount, ")") : ""), showOrders && myBiz && /*#__PURE__*/React.createElement(OrdersPanel, {
+  }, "\uD83D\uDCC5 ", lang === "ru" ? "Записи" : "Жазылулар", newBookingsCount > 0 ? " (".concat(newBookingsCount, ")") : ""), myBiz && /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-outline btn-full",
+    onClick: function onClick() {
+      return setShowAnalytics(true);
+    },
+    style: {
+      justifyContent: "center"
+    }
+  }, "\uD83D\uDCCA ", lang === "ru" ? "Аналитика" : "Аналитика"), showOrders && myBiz && /*#__PURE__*/React.createElement(OrdersPanel, {
     lang: lang,
     bizId: myBiz.id,
     onClose: function onClose() {
@@ -5910,6 +6014,12 @@ function BizCabinet(_ref37) {
     bizId: myBiz.id,
     onClose: function onClose() {
       return setShowBookings(false);
+    }
+  }), showAnalytics && myBiz && /*#__PURE__*/React.createElement(AnalyticsPanel, {
+    lang: lang,
+    bizId: myBiz.id,
+    onClose: function onClose() {
+      return setShowAnalytics(false);
     }
   }), editing && /*#__PURE__*/React.createElement("div", {
     style: {
@@ -9071,6 +9181,31 @@ function AdminPanel(_ref49) {
     }
   }, lang === "ru" ? "Смотреть" : "Көру", " \u2192"))));
 }
+
+// ── ANALYTICS API ────────────────────────────────────────────────────────
+window.NaviAnalytics = {
+  recordAdView: function(adId, deviceId) {
+    return fetch("/api/trpc/analytics.recordView", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ json: { adId: adId, deviceId: deviceId } })
+    }).catch(function(e) { console.warn("[Analytics] recordAdView failed:", e); });
+  },
+  recordOrder: function(orderId, businessId, amount) {
+    return fetch("/api/trpc/analytics.recordOrder", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ json: { orderId: orderId, businessId: businessId, amount: amount } })
+    }).catch(function(e) { console.warn("[Analytics] recordOrder failed:", e); });
+  },
+  getBusinessAnalytics: function(businessId) {
+    return fetch("/api/trpc/analytics.getBusinessAnalytics", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ json: { businessId: businessId } })
+    }).then(function(r) { return r.json(); }).catch(function(e) { console.warn("[Analytics] getBusinessAnalytics failed:", e); return null; });
+  }
+};
 
 // ── API SYNC LAYER ───────────────────────────────────────────────────────
 var NAVI_STORE_KEYS = ["navi_ads", "navi_bizs", "navi_prods", "navi_feed", "navi_reviews", "navi_orders", "navi_bookings", "navi_payment_requests", "navi_reports", "navi_prices", "navi_announcements"];
