@@ -10,8 +10,14 @@
 - [x] Откат schema.ts на MySQL (Manus)
 - [x] Конфигурация Vercel для Vite приложения
 - [x] Деплой на GitHub и Vercel
+- [x] Система аналитики для бизнеса (просмотры, заказы, конверсия)
+- [x] Backend API endpoints для аналитики (recordView, recordOrder, getBusinessAnalytics)
+- [x] Frontend интеграция аналитики в AdCard и updateOrderStatus
+- [x] Business Dashboard с Analytics Panel (день/неделя/месяц)
 
 ## Планы на будущее
 - [ ] Интеграция SMS через Mobizon.kz (вместо PIN)
 - [ ] Добавить платежи (Stripe или другое)
 - [ ] Улучшить UX на мобильных устройствах
+- [ ] Экспорт аналитики в CSV/PDF
+- [ ] Уведомления при достижении целей по заказам
