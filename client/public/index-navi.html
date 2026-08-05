@@ -13,8 +13,7 @@
 <link rel="icon" type="image/x-icon" href="/favicon.ico"/>
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png"/>
 <title>Navi</title>
-<script src="/react.min.js"></script>
-<script src="/react-dom.min.js"></script>
+<!-- React removed - using vanilla JS -->
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Manrope:wght@400;500;600;700;800&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -255,6 +254,8 @@ body{font-family:var(--font-b);color:var(--text);font-size:15px;line-height:1.5;
 </head>
 <body>
 <div id="root"></div>
+<script src="/react.min.js"></script>
+<script src="/react-dom.min.js"></script>
 <script src="/navi-api.js"></script>
 <script>
 function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
@@ -277,10 +278,11 @@ function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t =
 function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
 function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == _typeof(i) ? i : i + ""; }
 function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != _typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
-var _React = React,
-  useState = _React.useState,
-  useEffect = _React.useEffect,
-  useRef = _React.useRef;
+function initApp() {
+  var _React = React,
+    useState = _React.useState,
+    useEffect = _React.useEffect,
+    useRef = _React.useRef;
 var ADMIN_PASSWORD_HASH = "375e5d0413533ac3f825b75046a0b5409ac72cbe01ca6f4d26bf24c70f4816fc";
 var ADMIN_WA = "77001234567";
 var T = {
@@ -9269,37 +9271,42 @@ function _initNaviFromApi() {
   }));
   return _initNaviFromApi.apply(this, arguments);
 }
-var _rootEl = document.getElementById("root");
-_rootEl.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100dvh;background:#f7f5f2;font-family:Manrope,sans-serif;color:#1a2e1e;flex-direction:column;gap:10px"><div style="font-size:36px">🌿</div><div style="font-size:14px;font-weight:600;opacity:.5">Загрузка...</div></div>';
-initNaviFromApi().then(function () {
-  ReactDOM.createRoot(_rootEl).render(/*#__PURE__*/React.createElement(App, null));
-  // ── Polling: auto-refresh shared data every 15 seconds ──────────────────
-  (function startPolling() {
-    setInterval(function() {
-      fetch('/api/navi/init')
-        .then(function(r) { return r.ok ? r.json() : null; })
-        .then(function(data) {
-          if (!data) return;
-          var updated = false;
-          Object.keys(data).forEach(function(key) {
-            try {
-              var newVal = JSON.stringify(data[key]);
-              var oldVal = localStorage.getItem(key);
-              if (newVal !== oldVal) {
-                _origLSSet(key, newVal);
-                updated = true;
-              }
-            } catch(e) {}
-          });
-          if (updated) {
-            // Trigger React re-render by dispatching a custom event
-            window.dispatchEvent(new CustomEvent('navi:refresh', { detail: data }));
-          }
-        })
-        .catch(function() {});
-    }, 2000);
-  })();
-});
+// Initialize debug logging (outside initApp)
+var _debugLog = [];
+window._addDebugLog = function(msg) {
+  _debugLog.push(msg);
+  console.log('[DEBUG]', msg);
+};
+window._addDebugLog('Page loaded');
+
+function initApp() {
+  var _rootEl = document.getElementById("root");
+  _rootEl.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100dvh;background:#f7f5f2;font-family:Manrope,sans-serif;color:#1a2e1e;flex-direction:column;gap:10px"><div style="font-size:36px">🌿</div><div style="font-size:14px;font-weight:600;opacity:.5">Загрузка...</div><div id="debug-info" style="font-size:11px;color:#999;margin-top:20px;max-width:300px;text-align:center;word-break:break-all"></div></div>';
+
+} // End of initApp function
+
+// Wait for navi-api.js and React to load
+var waitForApi = function() {
+  var debugEl = document.getElementById('debug-info');
+  var status = 'React:' + (typeof window.React !== 'undefined' ? '✓' : '✗') + ' ReactDOM:' + (typeof window.ReactDOM !== 'undefined' ? '✓' : '✗') + ' NaviAPI:' + (typeof window.NaviAPI !== 'undefined' ? '✓' : '✗');
+  if (debugEl) debugEl.textContent = status;
+  window._addDebugLog(status);
+  
+  if (typeof window.NaviAPI !== 'undefined' && typeof window.React !== 'undefined' && typeof window.ReactDOM !== 'undefined') {
+    window._addDebugLog('All dependencies loaded, calling initApp...');
+    try {
+      initApp();
+      window._addDebugLog('initApp completed successfully');
+    } catch(e) {
+      window._addDebugLog('initApp error: ' + e.message);
+      console.error('[App] initApp error:', e);
+      document.getElementById('root').innerHTML = '<div style="padding:20px;color:red">Error: ' + e.message + '</div>';
+    }
+  } else {
+    setTimeout(waitForApi, 100);
+  }
+};
+waitForApi();
 </script>
 <script>
 if ("serviceWorker" in navigator) {

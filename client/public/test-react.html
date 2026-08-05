@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Test React Loading</title>
+</head>
+<body>
+  <div id="root" style="padding: 20px; font-family: sans-serif; white-space: pre-wrap;">Loading React...</div>
+  <script src="/react.min.js"></script>
+  <script src="/react-dom.min.js"></script>
+  <script>
+    var output = 'React loaded: ' + (typeof window.React !== 'undefined' ? 'YES' : 'NO') + '\n';
+    output += 'ReactDOM loaded: ' + (typeof window.ReactDOM !== 'undefined' ? 'YES' : 'NO') + '\n';
+    if (window.React) {
+      output += 'React version: ' + window.React.version + '\n';
+    }
+    if (window.ReactDOM) {
+      output += 'ReactDOM.createRoot: ' + (typeof window.ReactDOM.createRoot) + '\n';
+    }
+    document.getElementById('root').textContent = output;
+  </script>
+</body>
+</html>
